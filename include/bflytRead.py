@@ -16,7 +16,6 @@ class ReadBflyt(object):
 	
 	def checkheader(self, data, pos):
 		magic = data[pos:pos + 4]
-		print magic
 		if magic == "FLYT":
 			self.bflytHeader(data, pos)
 		elif magic == "lyt1":
@@ -51,8 +50,10 @@ class ReadBflyt(object):
 			self.gre1section(data, pos)
 		elif magic == "cnt1":
 			self.cnt1section(data, pos)
+		elif len(data) == pos:
+			print "Done"			
 		else:
-			print("Done")
+			print "No code for %s section at %s" %(magic, hex(pos))
 			#sys.exit(1)
 		
 	def ReadMagic(self, data, pos):
@@ -86,7 +87,6 @@ class ReadBflyt(object):
 		unk1 = RT.float4(data, pos);pos += 4							# unknown value
 		unk2 = RT.float4(data, pos);pos += 4							# unknown seems to be the same as unk1
 		filename = RT.getstr(data[pos:]);pos += RT.by4(int(len(filename)) + 1)	# looks to be the filename
-		print pos
 		tag = etree.SubElement(self.newroot, "tag", type="lyt1")
 		etree.SubElement(tag, "drawnFromMiddle").text = str(drawnFromMiddle)
 		etree.SubElement(tag, "width").text = str(width)
@@ -117,6 +117,7 @@ class ReadBflyt(object):
 		padd = endoffontlist - startoffontlist
 		pad = RT.by4(padd) - padd
 		pos += pad
+		self.checkheader(data, pos)	
 	
 	def txl1section(self, data, pos):
 		txl1magic, txl1length, pos = self.ReadMagic(data,pos)				# read magic & section length
@@ -223,15 +224,54 @@ class ReadBflyt(object):
 		
 		#print hex(pos)
 		self.checkheader(data, pos)	
-			
-			
+		
+	def panesection(self, data, pos, tag):
+		flags = RT.uint8(data, pos);pos += 1
+		origin = RT.uint8(data, pos);pos += 1
+		alpha = RT.uint8(data, pos);pos += 1
+		pad = RT.uint8(data, pos);pos += 1
+		name = RT.getstr(data[pos:]);pos += 32
+		XTrans = RT.float4(data, pos);pos += 4
+		YTrans = RT.float4(data, pos);pos += 4
+		ZTrans = RT.float4(data, pos);pos += 4
+		XRotate = RT.float4(data, pos);pos += 4
+		YRotate = RT.float4(data, pos);pos += 4
+		ZRotate = RT.float4(data, pos);pos += 4
+		XScale = RT.float4(data, pos);pos += 4
+		YScale = RT.float4(data, pos);pos += 4
+		width = RT.float4(data, pos);pos += 4
+		height = RT.float4(data, pos);pos += 4
+		tag.attrib['name'] = name	
+		etree.SubElement(tag, "visible").text = str(flags & 1)
+		etree.SubElement(tag, "WidescreenAffected").text = str((flags & 2) >>1)		# Not sure if this is still needed
+		etree.SubElement(tag, "flag").text = str((flags & 4) >>2)
+		originTree = etree.SubElement(tag, "origin")
+		originTree.attrib['x'] = str(origin%3)	
+		originTree.attrib['y'] = str(origin/3)	
+		etree.SubElement(tag, "alpha").text = str(alpha)
+		translateTree = etree.SubElement(tag, "translate")
+		etree.SubElement(translateTree, "x").text = str(XTrans)
+		etree.SubElement(translateTree, "y").text = str(YTrans)
+		etree.SubElement(translateTree, "z").text = str(ZTrans)
+		rotateTree = etree.SubElement(tag, "rotate")
+		etree.SubElement(rotateTree, "x").text = str(XRotate)
+		etree.SubElement(rotateTree, "y").text = str(YRotate)
+		etree.SubElement(rotateTree, "z").text = str(ZRotate)
+		scaleTree = etree.SubElement(tag, "scale")
+		etree.SubElement(scaleTree, "x").text = str(XScale)
+		etree.SubElement(scaleTree, "y").text = str(YScale)
+		sizeTree = etree.SubElement(tag, "size")
+		etree.SubElement(sizeTree, "x").text = str(width)
+		etree.SubElement(sizeTree, "y").text = str(height)
+		return pos
+	
 	def pan1section(self, data, pos):
 		StartPos = pos
 		pan1magic, pan1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pan1")
+		pos = self.panesection(data, pos, tag)								# read pane info
 		
-		pos = StartPos + pan1length # debug skip section
 		self.checkheader(data, pos)	
 		
 	def pas1section(self, data, pos):
@@ -248,7 +288,7 @@ class ReadBflyt(object):
 		pic1magic, pic1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pic1")
-		
+		pos = self.panesection(data, pos, tag)								# read pane info
 		pos = StartPos + pic1length # debug skip section
 		self.checkheader(data, pos)	
 		
@@ -257,6 +297,7 @@ class ReadBflyt(object):
 		txt1magic, txt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="txt1")
+		pos = self.panesection(data, pos, tag)								# read pane info
 		
 		pos = StartPos + txt1length # debug skip section
 		self.checkheader(data, pos)			
@@ -266,6 +307,7 @@ class ReadBflyt(object):
 		wnd1magic, wnd1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="wnd1")
+		pos = self.panesection(data, pos, tag)								# read pane info
 		
 		pos = StartPos + wnd1length # debug skip section
 		self.checkheader(data, pos)	
@@ -275,6 +317,7 @@ class ReadBflyt(object):
 		bnd1magic, bnd1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="bnd1")
+		pos = self.panesection(data, pos, tag)								# read pane info
 		
 		pos = StartPos + bnd1length # debug skip section
 		self.checkheader(data, pos)	
@@ -284,6 +327,7 @@ class ReadBflyt(object):
 		prt1magic, prt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="prt1")
+		pos = self.panesection(data, pos, tag)								# read pane info
 		
 		pos = StartPos + prt1length # debug skip section
 		self.checkheader(data, pos)	
