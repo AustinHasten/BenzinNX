@@ -280,7 +280,7 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pas1")
 		
-		pos = StartPos + pas1length # debug skip section
+		
 		self.checkheader(data, pos)	
 		
 	def pic1section(self, data, pos):
@@ -346,8 +346,19 @@ class ReadBflyt(object):
 		grp1magic, grp1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="grp1")
+		GroupName = RT.getstr(data[pos:]);pos += 24
+		numsubs = RT.uint16(data, pos);pos += 2
+		unk = RT.uint16(data, pos);pos += 2
+		tag.attrib['name'] = GroupName
+		if numsubs > 0:
+			subs = etree.SubElement(tag, "subs")
+			
+		i = 0
+		while i < numsubs:
+			etree.SubElement(subs, "sub").text = RT.getstr(data[pos:]);pos += 24
+			i += 1
 		
-		pos = StartPos + grp1length # debug skip section
+		
 		self.checkheader(data, pos)	
 		
 	def grs1section(self, data, pos):
