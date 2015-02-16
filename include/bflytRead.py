@@ -154,71 +154,47 @@ class ReadBflyt(object):
 		while len(MaterialOffsetree) < NumMaterials:
 			MaterialOffsetree.append(RT.uint32(data, pos));pos += 4
 			
-		# i = 0
-		# while i < NumMaterials:
-		MatName = RT.getstr(data[pos:]);pos += 28		
-		entries = etree.SubElement(tag, "entries", name=MatName)
-		colors = etree.SubElement(entries, "colors" )
-		fore_color = []
-		while len(fore_color) < 4:
-			fore_color.append(RT.uint8(data, pos));pos += 1
-		colorfore = etree.SubElement(colors, "forecolor")
-		colorfore.attrib['R'] = str(fore_color[0])
-		colorfore.attrib['G'] = str(fore_color[1])
-		colorfore.attrib['B'] = str(fore_color[2])
-		colorfore.attrib['A'] = str(fore_color[3])
-		back_color = []
-		while len(back_color) < 4:
-			back_color.append(RT.uint8(data, pos));pos += 1
-		colorback = etree.SubElement(colors, "backcolor")
-		colorback.attrib['R'] = str(back_color[0])
-		colorback.attrib['G'] = str(back_color[1])
-		colorback.attrib['B'] = str(back_color[2])
-		colorback.attrib['A'] = str(back_color[3])
-		# colorReg3 = []
-		# while len(colorReg3) < 4:
-			# colorReg3.append(RT.uint8(data, pos));pos += 1
-		# reg3color = etree.SubElement(colors, "colorReg3")
-		# reg3color.attrib['R'] = str(colorReg3[0])
-		# reg3color.attrib['G'] = str(colorReg3[1])
-		# reg3color.attrib['B'] = str(colorReg3[2])
-		# reg3color.attrib['A'] = str(colorReg3[3])
-		# tev_k1 = []
-		# while len(tev_k1) < 4:
-			# tev_k1.append(RT.uint8(data, pos));pos += 1
-		# k1tev = etree.SubElement(colors, "tev_k1")
-		# k1tev.attrib['R'] = str(tev_k1[0])
-		# k1tev.attrib['G'] = str(tev_k1[1])
-		# k1tev.attrib['B'] = str(tev_k1[2])
-		# k1tev.attrib['A'] = str(tev_k1[3])
-		# tev_k2 = []
-		# while len(tev_k2) < 4:
-			# tev_k2.append(RT.uint8(data, pos));pos += 1
-		# k2tev = etree.SubElement(colors, "tev_k2")
-		# k2tev.attrib['R'] = str(tev_k2[0])
-		# k2tev.attrib['G'] = str(tev_k2[1])
-		# k2tev.attrib['B'] = str(tev_k2[2])
-		# k2tev.attrib['A'] = str(tev_k2[3])
-		# tev_k3 = []
-		# while len(tev_k3) < 4:
-			# tev_k3.append(RT.uint8(data, pos));pos += 1
-		# k3tev = etree.SubElement(colors, "tev_k3")
-		# k3tev.attrib['R'] = str(tev_k3[0])
-		# k3tev.attrib['G'] = str(tev_k3[1])
-		# k3tev.attrib['B'] = str(tev_k3[2])
-		# k3tev.attrib['A'] = str(tev_k3[3])
-		# tev_k4 = []
-		# while len(tev_k4) < 4:
-			# tev_k4.append(RT.uint8(data, pos));pos += 1
-		# k4tev = etree.SubElement(colors, "tev_k4")
-		# k4tev.attrib['R'] = str(tev_k4[0])
-		# k4tev.attrib['G'] = str(tev_k4[1])
-		# k4tev.attrib['B'] = str(tev_k4[2])
-		# k4tev.attrib['A'] = str(tev_k4[3])
+		self.MaterialNames = []
+		i = 0
+		while i < NumMaterials:
+			MatName = RT.getstr(data[pos:]);pos += 28
+			self.MaterialNames.append(MatName)
+			entries = etree.SubElement(tag, "entries", name=MatName)
+			colors = etree.SubElement(entries, "colors" )
+			fore_color = []
+			while len(fore_color) < 4:
+				fore_color.append(RT.uint8(data, pos));pos += 1
+			colorfore = etree.SubElement(colors, "forecolor")
+			colorfore.attrib['R'] = str(fore_color[0])
+			colorfore.attrib['G'] = str(fore_color[1])
+			colorfore.attrib['B'] = str(fore_color[2])
+			colorfore.attrib['A'] = str(fore_color[3])
+			back_color = []
+			while len(back_color) < 4:
+				back_color.append(RT.uint8(data, pos));pos += 1
+			colorback = etree.SubElement(colors, "backcolor")
+			colorback.attrib['R'] = str(back_color[0])
+			colorback.attrib['G'] = str(back_color[1])
+			colorback.attrib['B'] = str(back_color[2])
+			colorback.attrib['A'] = str(back_color[3])
+			flags = RT.uint32(data, pos);pos += 4
+			flagOutput = etree.SubElement(entries, "flags").text = "%08x" %flags
+			
+			if flags == 21:
+				etree.SubElement(tag, "dump").text = data[pos:pos+32].encode("hex")
+				pos += 32
+			elif flags == 1130:
+				etree.SubElement(tag, "dump").text = data[pos:pos+72].encode("hex")
+				pos += 72
+			elif flags == 533:
+				etree.SubElement(tag, "dump").text = data[pos:pos+40].encode("hex")
+				pos += 40
+			elif flags == 131072:
+				etree.SubElement(tag, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
 		
 		
-		
-		# i += 1
+			i += 1
 		#-------------------------------------------------------------------------------------------------
 		
 		fullpos = StartPos + mat1length # debug skip section		
@@ -297,7 +273,7 @@ class ReadBflyt(object):
 		mat_num = RT.uint16(data, pos);pos += 2
 		num_texcoords = RT.uint8(data, pos);pos += 1
 		pad = RT.uint8(data, pos);pos += 1
-		etree.SubElement(tag, "material").text = str(mat_num)
+		etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
 		vtxColTL = etree.SubElement(tag, "vtxColorTL")
 		vtxColTL.attrib['R'] = str(vtxColorTL >> 24)
 		vtxColTL.attrib['G'] = str(vtxColorTL >> 16 & 0xff)
