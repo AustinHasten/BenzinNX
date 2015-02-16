@@ -150,32 +150,31 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="mat1")
 		
-		pos = StartPos + mat1length # debug skip section
-		# MaterialOffsetree = []
-		# while len(MaterialOffsetree) < NumMaterials:
-			# MaterialOffsetree.append(RT.uint32(data, pos));pos += 4
+		MaterialOffsetree = []
+		while len(MaterialOffsetree) < NumMaterials:
+			MaterialOffsetree.append(RT.uint32(data, pos));pos += 4
 			
 		# i = 0
 		# while i < NumMaterials:
-		# MatName = RT.getstr(data[pos:]);pos += 28		
-		# entries = etree.SubElement(tag, "entries", name=MatName)
-		# colors = etree.SubElement(entries, "colors" )
-		# fore_color = []
-		# while len(fore_color) < 4:
-			# fore_color.append(RT.uint8(data, pos));pos += 1
-		# colorfore = etree.SubElement(colors, "forecolor")
-		# colorfore.attrib['R'] = str(fore_color[0])
-		# colorfore.attrib['G'] = str(fore_color[1])
-		# colorfore.attrib['B'] = str(fore_color[2])
-		# colorfore.attrib['A'] = str(fore_color[3])
-		# back_color = []
-		# while len(back_color) < 4:
-			# back_color.append(RT.uint8(data, pos));pos += 1
-		# colorback = etree.SubElement(colors, "backcolor")
-		# colorback.attrib['R'] = str(back_color[0])
-		# colorback.attrib['G'] = str(back_color[1])
-		# colorback.attrib['B'] = str(back_color[2])
-		# colorback.attrib['A'] = str(back_color[3])
+		MatName = RT.getstr(data[pos:]);pos += 28		
+		entries = etree.SubElement(tag, "entries", name=MatName)
+		colors = etree.SubElement(entries, "colors" )
+		fore_color = []
+		while len(fore_color) < 4:
+			fore_color.append(RT.uint8(data, pos));pos += 1
+		colorfore = etree.SubElement(colors, "forecolor")
+		colorfore.attrib['R'] = str(fore_color[0])
+		colorfore.attrib['G'] = str(fore_color[1])
+		colorfore.attrib['B'] = str(fore_color[2])
+		colorfore.attrib['A'] = str(fore_color[3])
+		back_color = []
+		while len(back_color) < 4:
+			back_color.append(RT.uint8(data, pos));pos += 1
+		colorback = etree.SubElement(colors, "backcolor")
+		colorback.attrib['R'] = str(back_color[0])
+		colorback.attrib['G'] = str(back_color[1])
+		colorback.attrib['B'] = str(back_color[2])
+		colorback.attrib['A'] = str(back_color[3])
 		# colorReg3 = []
 		# while len(colorReg3) < 4:
 			# colorReg3.append(RT.uint8(data, pos));pos += 1
@@ -222,8 +221,10 @@ class ReadBflyt(object):
 		# i += 1
 		#-------------------------------------------------------------------------------------------------
 		
+		fullpos = StartPos + mat1length # debug skip section		
+		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
 		#print hex(pos)
-		self.checkheader(data, pos)	
+		self.checkheader(data, fullpos)	
 		
 	def panesection(self, data, pos, tag):
 		flags = RT.uint8(data, pos);pos += 1
@@ -289,7 +290,52 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pic1")
 		pos = self.panesection(data, pos, tag)								# read pane info
-		pos = StartPos + pic1length # debug skip section
+		vtxColorTL = RT.uint32(data, pos);pos += 4
+		vtxColorTR = RT.uint32(data, pos);pos += 4
+		vtxColorBL = RT.uint32(data, pos);pos += 4
+		vtxColorBR = RT.uint32(data, pos);pos += 4
+		mat_num = RT.uint16(data, pos);pos += 2
+		num_texcoords = RT.uint8(data, pos);pos += 1
+		pad = RT.uint8(data, pos);pos += 1
+		etree.SubElement(tag, "material").text = str(mat_num)
+		vtxColTL = etree.SubElement(tag, "vtxColorTL")
+		vtxColTL.attrib['R'] = str(vtxColorTL >> 24)
+		vtxColTL.attrib['G'] = str(vtxColorTL >> 16 & 0xff)
+		vtxColTL.attrib['B'] = str(vtxColorTL >> 8 & 0xff)
+		vtxColTL.attrib['A'] = str(vtxColorTL >> 0 & 0xff)
+		vtxColTR = etree.SubElement(tag, "vtxColorTR")
+		vtxColTR.attrib['R'] = str(vtxColorTR >> 24)
+		vtxColTR.attrib['G'] = str(vtxColorTR >> 16 & 0xff)
+		vtxColTR.attrib['B'] = str(vtxColorTR >> 8 & 0xff)
+		vtxColTR.attrib['A'] = str(vtxColorTR >> 0 & 0xff)
+		vtxColBL = etree.SubElement(tag, "vtxColorBL")
+		vtxColBL.attrib['R'] = str(vtxColorBL >> 24)
+		vtxColBL.attrib['G'] = str(vtxColorBL >> 16 & 0xff)
+		vtxColBL.attrib['B'] = str(vtxColorBL >> 8 & 0xff)
+		vtxColBL.attrib['A'] = str(vtxColorBL >> 0 & 0xff)
+		vtxColBR = etree.SubElement(tag, "vtxColorBR")
+		vtxColBR.attrib['R'] = str(vtxColorBR >> 24)
+		vtxColBR.attrib['G'] = str(vtxColorBR >> 16 & 0xff)
+		vtxColBR.attrib['B'] = str(vtxColorBR >> 8 & 0xff)
+		vtxColBR.attrib['A'] = str(vtxColorBR >> 0 & 0xff)
+		coordinates = etree.SubElement(tag, "coordinates")
+		i = 0
+		while i < num_texcoords:
+			set = etree.SubElement(coordinates, "set")
+			coord = etree.SubElement(set, "coordTL")
+			coord.attrib['s'] = str(RT.float4(data, pos));pos += 4
+			coord.attrib['t'] = str(RT.float4(data, pos));pos += 4
+			coord = etree.SubElement(set, "coordTR")
+			coord.attrib['s'] = str(RT.float4(data, pos));pos += 4
+			coord.attrib['t'] = str(RT.float4(data, pos));pos += 4
+			coord = etree.SubElement(set, "coordBL")
+			coord.attrib['s'] = str(RT.float4(data, pos));pos += 4
+			coord.attrib['t'] = str(RT.float4(data, pos));pos += 4
+			coord = etree.SubElement(set, "coordBR")
+			coord.attrib['s'] = str(RT.float4(data, pos));pos += 4
+			coord.attrib['t'] = str(RT.float4(data, pos));pos += 4
+			i += 1
+		
 		self.checkheader(data, pos)	
 		
 	def txt1section(self, data, pos):
