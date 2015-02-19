@@ -95,7 +95,6 @@ class ReadBflyt(object):
 		etree.SubElement(tag, "unk2").text = str(unk2)
 		etree.SubElement(tag, "filename").text = str(filename)
 		self.checkheader(data, pos)	
-		#self.debugfile(filename)
 				
 	def fnl1section(self, data, pos):
 		fnl1magic, fnl1length, pos = self.ReadMagic(data,pos)				# read magic & section length
@@ -126,7 +125,7 @@ class ReadBflyt(object):
 		loop = 0
 		FilenameOffset = []
 		while loop < NumTextures:
-			FilenameOffset.append(str(RT.uint32(data, pos)));pos += 4		# read name offsetrees
+			FilenameOffset.append(str(RT.uint32(data, pos)));pos += 4		# read name offsets
 			loop += 1
 		startoftexlist = pos
 		tag = etree.SubElement(self.newroot, "tag", type="txl1")
@@ -146,14 +145,13 @@ class ReadBflyt(object):
 		mat1magic, mat1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		NumMaterials = RT.uint16(data, pos);pos += 2						# number of materials in section
-		SizeHeader = RT.uint16(data, pos);pos += 2							# Offsetree to list start. Always zero
+		SizeHeader = RT.uint16(data, pos);pos += 2							# Offset to list start. Always zero
 		
 		tag = etree.SubElement(self.newroot, "tag", type="mat1")
 		
-		MaterialOffsetree = []
-		while len(MaterialOffsetree) < NumMaterials:
-			MaterialOffsetree.append(RT.uint32(data, pos));pos += 4
-			
+		MaterialOffset = []
+		while len(MaterialOffset) < NumMaterials:
+			MaterialOffset.append(RT.uint32(data, pos));pos += 4
 		self.MaterialNames = []
 		i = 0
 		while i < NumMaterials:
@@ -178,19 +176,19 @@ class ReadBflyt(object):
 			colorback.attrib['B'] = str(back_color[2])
 			colorback.attrib['A'] = str(back_color[3])
 			flags = RT.uint32(data, pos);pos += 4
-			flagOutput = etree.SubElement(entries, "flags").text = "%08x" %flags
+			etree.SubElement(entries, "flags").text = str(flags)
 			
 			if flags == 21:
-				etree.SubElement(tag, "dump").text = data[pos:pos+32].encode("hex")
+				etree.SubElement(entries, "dump").text = data[pos:pos+32].encode("hex")
 				pos += 32
 			elif flags == 1130:
-				etree.SubElement(tag, "dump").text = data[pos:pos+72].encode("hex")
+				etree.SubElement(entries, "dump").text = data[pos:pos+72].encode("hex")
 				pos += 72
 			elif flags == 533:
-				etree.SubElement(tag, "dump").text = data[pos:pos+40].encode("hex")
+				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
 				pos += 40
 			elif flags == 131072:
-				etree.SubElement(tag, "dump").text = data[pos:pos+8].encode("hex")
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
 				pos += 8
 		
 		
@@ -198,15 +196,14 @@ class ReadBflyt(object):
 		#-------------------------------------------------------------------------------------------------
 		
 		fullpos = StartPos + mat1length # debug skip section		
-		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
-		#print hex(pos)
+		
 		self.checkheader(data, fullpos)	
 		
 	def panesection(self, data, pos, tag):
 		flags = RT.uint8(data, pos);pos += 1
 		origin = RT.uint8(data, pos);pos += 1
 		alpha = RT.uint8(data, pos);pos += 1
-		pad = RT.uint8(data, pos);pos += 1
+		unk = RT.uint8(data, pos);pos += 1
 		name = RT.getstr(data[pos:]);pos += 32
 		XTrans = RT.float4(data, pos);pos += 4
 		YTrans = RT.float4(data, pos);pos += 4
@@ -226,6 +223,7 @@ class ReadBflyt(object):
 		originTree.attrib['x'] = str(origin%3)	
 		originTree.attrib['y'] = str(origin/3)	
 		etree.SubElement(tag, "alpha").text = str(alpha)
+		etree.SubElement(tag, "unk").text = str(unk)
 		translateTree = etree.SubElement(tag, "translate")
 		etree.SubElement(translateTree, "x").text = str(XTrans)
 		etree.SubElement(translateTree, "y").text = str(YTrans)
@@ -274,22 +272,23 @@ class ReadBflyt(object):
 		num_texcoords = RT.uint8(data, pos);pos += 1
 		pad = RT.uint8(data, pos);pos += 1
 		etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
-		vtxColTL = etree.SubElement(tag, "vtxColorTL")
+		colors = etree.SubElement(tag, "colors")
+		vtxColTL = etree.SubElement(colors, "vtxColorTL")
 		vtxColTL.attrib['R'] = str(vtxColorTL >> 24)
 		vtxColTL.attrib['G'] = str(vtxColorTL >> 16 & 0xff)
 		vtxColTL.attrib['B'] = str(vtxColorTL >> 8 & 0xff)
 		vtxColTL.attrib['A'] = str(vtxColorTL >> 0 & 0xff)
-		vtxColTR = etree.SubElement(tag, "vtxColorTR")
+		vtxColTR = etree.SubElement(colors, "vtxColorTR")
 		vtxColTR.attrib['R'] = str(vtxColorTR >> 24)
 		vtxColTR.attrib['G'] = str(vtxColorTR >> 16 & 0xff)
 		vtxColTR.attrib['B'] = str(vtxColorTR >> 8 & 0xff)
 		vtxColTR.attrib['A'] = str(vtxColorTR >> 0 & 0xff)
-		vtxColBL = etree.SubElement(tag, "vtxColorBL")
+		vtxColBL = etree.SubElement(colors, "vtxColorBL")
 		vtxColBL.attrib['R'] = str(vtxColorBL >> 24)
 		vtxColBL.attrib['G'] = str(vtxColorBL >> 16 & 0xff)
 		vtxColBL.attrib['B'] = str(vtxColorBL >> 8 & 0xff)
 		vtxColBL.attrib['A'] = str(vtxColorBL >> 0 & 0xff)
-		vtxColBR = etree.SubElement(tag, "vtxColorBR")
+		vtxColBR = etree.SubElement(colors, "vtxColorBR")
 		vtxColBR.attrib['R'] = str(vtxColorBR >> 24)
 		vtxColBR.attrib['G'] = str(vtxColorBR >> 16 & 0xff)
 		vtxColBR.attrib['B'] = str(vtxColorBR >> 8 & 0xff)
@@ -321,8 +320,10 @@ class ReadBflyt(object):
 		tag = etree.SubElement(self.newroot, "tag", type="txt1")
 		pos = self.panesection(data, pos, tag)								# read pane info
 		
-		pos = StartPos + txt1length # debug skip section
-		self.checkheader(data, pos)			
+		
+		fullpos = StartPos + txt1length # debug skip section		
+		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+		self.checkheader(data, fullpos)		
 		
 	def wnd1section(self, data, pos):
 		StartPos = pos
@@ -331,8 +332,9 @@ class ReadBflyt(object):
 		tag = etree.SubElement(self.newroot, "tag", type="wnd1")
 		pos = self.panesection(data, pos, tag)								# read pane info
 		
-		pos = StartPos + wnd1length # debug skip section
-		self.checkheader(data, pos)	
+		fullpos = StartPos + wnd1length # debug skip section		
+		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+		self.checkheader(data, fullpos)		
 		
 	def bnd1section(self, data, pos):
 		StartPos = pos
@@ -351,8 +353,10 @@ class ReadBflyt(object):
 		tag = etree.SubElement(self.newroot, "tag", type="prt1")
 		pos = self.panesection(data, pos, tag)								# read pane info
 		
-		pos = StartPos + prt1length # debug skip section
-		self.checkheader(data, pos)	
+		
+		fullpos = StartPos + prt1length # debug skip section		
+		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+		self.checkheader(data, fullpos)		
 		
 	def pae1section(self, data, pos):
 		StartPos = pos
@@ -407,18 +411,13 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="cnt1")
 		
-		pos = StartPos + cnt1length # debug skip section
-		self.checkheader(data, pos)	
+		
+		fullpos = StartPos + cnt1length # debug skip section		
+		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+		self.checkheader(data, fullpos)		
 		
 		
 		
-		
-	
-	
-	
-	
-	
-	
 	def debugfile(self, data):
 		
 		with open("data.bin", "w") as dirpath:

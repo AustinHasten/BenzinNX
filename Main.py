@@ -1,5 +1,5 @@
 import os, sys, struct
-import xml.etree.ElementTree as ET
+from lxml import etree
 from include import *
 
 def main():
@@ -17,7 +17,7 @@ def main():
 		bflytread.start(data, 0, name)
 	else:
 		# try:
-		tree = ET.parse(sys.argv[1])
+		tree = etree.parse(sys.argv[1])
 		data = tree.getroot()
 		if data.tag == "xmflyt":
 			bflytwrite = bflytWrite.WriteBflyt()
