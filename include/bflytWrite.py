@@ -28,7 +28,25 @@ class WriteBflyt(object):
 			elif i.get('type') == "pas1":
 				self.OutFile += self.writepas1(i)
 			elif i.get('type') == "pic1":
-				self.writepic1(i)
+				self.OutFile += self.writepic1(i)
+			elif i.get('type') == "bnd1":
+				self.OutFile += self.writepan1(i)
+			elif i.get('type') == "wnd1":
+				self.OutFile += self.writewnd1(i)
+			elif i.get('type') == "txt1":
+				self.OutFile += self.writetxt1(i)
+			elif i.get('type') == "prt1":
+				self.OutFile += self.writeprt1(i)
+			elif i.get('type') == "pae1":
+				self.OutFile += self.writepas1(i)
+			elif i.get('type') == "grp1":
+				self.OutFile += self.writegrp1(i)
+			elif i.get('type') == "grs1":
+				self.OutFile += self.writepas1(i)
+			elif i.get('type') == "gre1":
+				self.OutFile += self.writepas1(i)
+			elif i.get('type') == "cnt1":
+				self.OutFile += self.writecnt1(i)
 		
 		self.OutFile = self.header() + self.OutFile
 		self.debugfile(self.OutFile)
@@ -145,12 +163,12 @@ class WriteBflyt(object):
 		TempSec = self.writepaneinfo(sec)
 		pan1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		pan1sec += TempSec
-		
+		self.FileSections += 1		
 		return pan1sec
 				
 	def writepas1(self, sec):
 		pas1sec = struct.pack(">4sI",sec.get('type'),8)
-	
+		self.FileSections += 1	
 		return pas1sec
 		
 	def writepic1(self, sec):
@@ -180,7 +198,7 @@ class WriteBflyt(object):
 		material = sec.find("material").text
 		while i < len(self.MatList):
 			if material != self.MatList[i]:
-				print i 
+				pass
 			else:
 				mat_num = i
 				break
@@ -202,11 +220,65 @@ class WriteBflyt(object):
 		
 		TempSec += struct.pack(">4IH2B", vtxColorTL, vtxColorTR, vtxColorBL, vtxColorBR, mat_num, len(num_texcoords), 0)
 		TempSec += texcoords
-		pas1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
-		pas1sec += TempSec
-				
-		return pan1sec
+		pic1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		pic1sec += TempSec
+		self.FileSections += 1				
+		return pic1sec
 	
+	def writewnd1(self, sec):
+		TempSec = self.writepaneinfo(sec)
+		TempSec += binascii.unhexlify(sec.find("dump").text)
+		
+		wnd1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		wnd1sec += TempSec
+		self.FileSections += 1
+		return wnd1sec
+		
+	def writeprt1(self, sec):
+		TempSec = self.writepaneinfo(sec)
+		TempSec += binascii.unhexlify(sec.find("dump").text)
+		
+		prt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		prt1sec += TempSec
+		self.FileSections += 1
+		return prt1sec
+		
+		
+	def writetxt1(self, sec):
+		TempSec = self.writepaneinfo(sec)
+		TempSec += binascii.unhexlify(sec.find("dump").text)
+		
+		txt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		txt1sec += TempSec
+		self.FileSections += 1
+		return txt1sec
+		
+	def writegrp1(self, sec):	
+		TempSec2 = ""
+		GroupName = sec.get("name")
+		temp = sec.find('subs')
+		if temp is not None:
+			num_subs = len(temp.findall('sub'))
+			subnames = temp.findall('sub')
+			for i in subnames:
+				TempSec2 += struct.pack('>24s', i.text)				
+		else:		
+			num_subs = 0
+		TempSec = struct.pack(">24s2H",GroupName, num_subs, 0)
+		TempSec += TempSec2
+		grp1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		grp1sec += TempSec
+		self.FileSections += 1
+		return grp1sec
+	
+	def writecnt1(self, sec):
+		TempSec = binascii.unhexlify(sec.find("dump").text)
+		
+		cnt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		cnt1sec += TempSec
+		self.FileSections += 1
+		return cnt1sec
+		
 	def writepaneinfo(self, sec):
 		
 		name = sec.get("name")

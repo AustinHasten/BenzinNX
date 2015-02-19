@@ -175,6 +175,7 @@ class ReadBflyt(object):
 			colorback.attrib['G'] = str(back_color[1])
 			colorback.attrib['B'] = str(back_color[2])
 			colorback.attrib['A'] = str(back_color[3])
+			print pos
 			flags = RT.uint32(data, pos);pos += 4
 			etree.SubElement(entries, "flags").text = str(flags)
 			
@@ -190,6 +191,12 @@ class ReadBflyt(object):
 			elif flags == 131072:
 				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
 				pos += 8
+			elif flags == 703:
+				etree.SubElement(entries, "dump").text = data[pos:pos+112].encode("hex")
+				pos += 112
+			elif flags == 1215:
+				etree.SubElement(entries, "dump").text = data[pos:pos+108].encode("hex")
+				pos += 108
 		
 		
 			i += 1
