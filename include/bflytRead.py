@@ -175,7 +175,6 @@ class ReadBflyt(object):
 			colorback.attrib['G'] = str(back_color[1])
 			colorback.attrib['B'] = str(back_color[2])
 			colorback.attrib['A'] = str(back_color[3])
-			print pos
 			flags = RT.uint32(data, pos);pos += 4
 			etree.SubElement(entries, "flags").text = str(flags)
 			

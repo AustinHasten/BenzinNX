@@ -15,6 +15,9 @@ def main():
 	if header == "FLYT":
 		bflytread = bflytRead.ReadBflyt()
 		bflytread.start(data, 0, name)
+	elif header == "FLAN":
+		bflanread = bflanRead.ReadBflan()
+		bflanread.start(data, 0, name)
 	else:
 		# try:
 		tree = etree.parse(sys.argv[1])
