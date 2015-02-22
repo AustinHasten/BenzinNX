@@ -55,8 +55,8 @@ class ReadBflan(object):
 		Num_Seconds = RT.uint16(data, pos);pos += 2
 		FirstOffset = RT.uint32(data, pos);pos += 4
 		SecondsOffset = RT.uint32(data, pos);pos += 4
-		unk5a = RT.uint16(data, pos);pos += 2
-		unk5b = RT.uint16(data, pos);pos += 2
+		Start = RT.uint16(data, pos);pos += 2
+		End = RT.uint16(data, pos);pos += 2
 		ChildBinding = RT.uint8(data, pos);pos += 1
 		pad = RT.uint8(data, pos);pos += 1
 		pad1 = RT.uint16(data, pos);pos += 2
@@ -65,8 +65,8 @@ class ReadBflan(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pat1")
 		etree.SubElement(tag, "AnimOrder").text = str(AnimOrder)
-		etree.SubElement(tag, "unk5a").text = str(unk5a)
-		etree.SubElement(tag, "unk5b").text = str(unk5b)
+		etree.SubElement(tag, "StartOfFile").text = str(Start)
+		etree.SubElement(tag, "EndOfFile").text = str(End)
 		etree.SubElement(tag, "ChildBinding").text = str(ChildBinding)		
 		etree.SubElement(tag, "First").text = str(First)
 		strngs2 = etree.SubElement(tag, "AnimatedGroups")
@@ -131,9 +131,65 @@ class ReadBflan(object):
 			for offset in TagOffsets:
 				pos = StartPaiPos + item + offset
 				typetree = etree.SubElement(pane, "tag")
-				tagtype = data[pos:pos + 4]
+				TagStartPos = pos
+				tagtype = data[pos:pos + 4];pos += 4
 				typetree.attrib['type'] = tagtype
+				
+				entry_count = RT.uint8(data, pos);pos += 1
+				pad = RT.uint24(data, pos);pos += 3
+				Offsets = []
+				i = 0
+				while i < entry_count:
+					Offsets.append(RT.uint32(data, pos));pos += 4
+					i += 1
+					
+				for offset1 in Offsets:
+					pos = TagStartPos + offset1
+					type1 = RT.uint8(data, pos);pos += 1
+					type2 = RT.uint8(data, pos);pos += 1
+					data_type = RT.uint16(data, pos);pos += 2
+					coord_count = RT.uint16(data, pos);pos += 2
+					pad1 = RT.uint16(data, pos);pos += 2
+					OffsetToTagData = RT.uint32(data, pos);pos += 4
+					
+					entry = etree.SubElement(typetree, "entry")
+					entry.attrib['type1'] = str(type1)
+					entry.attrib['type2'] = str(type2)
+					
+					if data_type == 512:
+						self.triplet(data, pos, entry, coord_count)
+						
+					elif data_type == 256:
+						self.pair(data, pos, entry, coord_count)
+
+		
+	
+				
+				
+	
+	def triplet(self, data, pos, tag, count):
+		i = 0
+		while i < count:
+			p1 = RT.float4(data, pos);pos += 4
+			p2 = RT.float4(data, pos);pos += 4
+			p3 = RT.float4(data, pos);pos += 4
+			info = etree.SubElement(tag, "triplet")
+			etree.SubElement(info, "frame").text = str(p1)
+			etree.SubElement(info, "value").text = str(p2)
+			etree.SubElement(info, "blend").text = str(p3)			
+			i += 1
 			
+	def pair(self, data, pos, tag, count):
+		i = 0
+		while i < count:
+			p1 = RT.float4(data, pos);pos += 4
+			p2 = RT.uint16(data, pos);pos += 2
+			p3 = RT.uint16(data, pos);pos += 2
+			info = etree.SubElement(tag, "pair")
+			etree.SubElement(info, "frame").text = str(p1)
+			etree.SubElement(info, "data2").text = str(p2)
+			etree.SubElement(info, "padding").text = str(p3)			
+			i += 1
 		
 		
 	def debugfile(self, data):
