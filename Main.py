@@ -25,6 +25,9 @@ def main():
 		if data.tag == "xmflyt":
 			bflytwrite = bflytWrite.WriteBflyt()
 			bflytwrite.start(data, name)
+		elif data.tag == "xmflan":
+			bflanwrite = bflanWrite.WriteBflan()
+			bflanwrite.start(data, name)
 		# except:
 			# e = sys.exc_info()[0]
 			# print( "<p>Error: %s</p>" % e )

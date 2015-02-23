@@ -1,2 +1,2 @@
 
-import bflytRead, bflytWrite, bflanRead
+import bflytRead, bflytWrite, bflanRead, bflanWrite
