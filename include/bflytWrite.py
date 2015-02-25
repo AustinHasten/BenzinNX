@@ -227,8 +227,45 @@ class WriteBflyt(object):
 	
 	def writewnd1(self, sec):
 		TempSec = self.writepaneinfo(sec)
-		TempSec += binascii.unhexlify(sec.find("dump").text)
+		wnd = sec.find("wnd")
+		coordinate = wnd.findall("coordinate")		
+		FrameCount = int(wnd.find("FrameCount").text)
+		unk1 = int(wnd.find("unk1").text)
+		offset1 = int(wnd.find("offset1").text)
+		offset2 = int(wnd.find("offset2").text)
+		wnd1 = sec.find("wnd1")
+		color = wnd1.findall("color")
+		material = self.MatList.index(wnd1.find("material").text)
+		coordinate_count = int(wnd1.find("coordinate_count").text)
+		coordSec = ""
+		if coordinate_count > 0:
+			Coords = sec.findall("Coords")
+			for each in Coords:
+				texcoordSec = each.findall("texcoord")
+				texcoords = []
+				for i in texcoordSec:
+					texcoords.append(float(i.text))
+				
+				coordSec += struct.pack('>%sf' % len(texcoords), *texcoords)
+				
+		wnd4  = sec.find("wnd4")
+		offset = int(wnd4.find("offset").text)
+		wnd4mat = sec.find("wnd4mat")
+		wnd4matmaterial = self.MatList.index(wnd4mat.find("material").text)
+		index = int(wnd4mat.find("index").text)
+		part1 = struct.pack('>4f4B2I16BH2B', float(coordinate[0].text), float(coordinate[1].text), float(coordinate[2].text), float(coordinate[3].text),
+							FrameCount, unk1, 0, 0, offset1, offset2,
+							int(color[0].get("R")), int(color[0].get("G")), int(color[0].get("B")), int(color[0].get("A")),
+							int(color[1].get("R")), int(color[1].get("G")), int(color[1].get("B")), int(color[1].get("A")),
+							int(color[2].get("R")), int(color[2].get("G")), int(color[2].get("B")), int(color[2].get("A")),
+							int(color[3].get("R")), int(color[3].get("G")), int(color[3].get("B")), int(color[3].get("A")),
+							material, coordinate_count, 0
+							)
+		part2 = struct.pack('>IH2B', offset, wnd4matmaterial, index, 0)
 		
+		TempSec += part1
+		TempSec += coordSec
+		TempSec += part2
 		wnd1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		wnd1sec += TempSec
 		self.FileSections += 1

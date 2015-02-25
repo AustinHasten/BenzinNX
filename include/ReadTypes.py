@@ -29,3 +29,13 @@ class Reader(object):
 			return data[:x]
 		else:
 			return data
+			
+	def BitExtract(self, value, count, start):
+		# this function relies on heavy compiler optimisation to be efficient :p
+		mask = 0
+		i = start
+		while i < start+count:
+			mask |= (0x80000000 >> i)
+			i +=1
+		
+		return (value & mask) >> (32 - (start + count))	

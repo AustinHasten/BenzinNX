@@ -130,8 +130,10 @@ class ReadBflyt(object):
 		startoftexlist = pos
 		tag = etree.SubElement(self.newroot, "tag", type="txl1")
 		entries = etree.SubElement(tag, "entries")
+		self.texturefiles = []
 		for i in xrange(len(FilenameOffset)):
 			Filenames = RT.getstr(data[pos:]);pos += int(len(Filenames)+1)	# read the names
+			self.texturefiles.append(Filenames)
 			etree.SubElement(entries, "name").text = Filenames
 		
 		endoftexlist = pos
@@ -178,6 +180,23 @@ class ReadBflyt(object):
 			flags = RT.uint32(data, pos);pos += 4
 			etree.SubElement(entries, "flags").text = str(flags)
 			
+			
+			texref = RT.BitExtract(flags, 2, 28)
+			TextureSRT = RT.BitExtract(flags, 3, 24)
+			print "%s has %d"%(MatName, TextureSRT)
+			
+			
+			# loop = 0
+			# while loop < texref:
+				# file = RT.uint16(data, pos);pos += 2
+				# wrap_s = RT.uint8(data, pos);pos += 1
+				# wrap_t = RT.uint8(data, pos);pos += 1
+				# texture = etree.SubElement(entries, "texture")
+				# texture.attrib['name'] = self.texturefiles[file]
+				# etree.SubElement(texture, "wrap_s").text = str(wrap_s)
+				# etree.SubElement(texture, "wrap_t").text = str(wrap_t)
+				# loop += 1
+				
 			if flags == 21:
 				etree.SubElement(entries, "dump").text = data[pos:pos+32].encode("hex")
 				pos += 32
@@ -337,10 +356,47 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="wnd1")
 		pos = self.panesection(data, pos, tag)								# read pane info
-		
-		fullpos = StartPos + wnd1length # debug skip section		
-		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
-		self.checkheader(data, fullpos)		
+		wndd = etree.SubElement(tag, "wnd")
+		for i in xrange(4):
+			etree.SubElement(wndd, "coordinate").text = str(RT.float4(data, pos));pos += 4
+			
+		etree.SubElement(wndd, "FrameCount").text = str(RT.uint8(data, pos));pos += 1
+		etree.SubElement(wndd, "unk1").text = str(RT.uint8(data, pos));pos += 1
+		pad = RT.uint16(data, pos);pos += 2
+		etree.SubElement(wndd, "offset1").text = str(RT.uint32(data, pos));pos += 4
+		etree.SubElement(wndd, "offset2").text = str(RT.uint32(data, pos));pos += 4
+		wnddd = etree.SubElement(tag, "wnd1")
+		for i in xrange(4):
+			color =etree.SubElement(wnddd, "color")
+			color.attrib["R"] = str(RT.uint8(data, pos));pos += 1
+			color.attrib["G"] = str(RT.uint8(data, pos));pos += 1
+			color.attrib["B"] = str(RT.uint8(data, pos));pos += 1
+			color.attrib["A"] = str(RT.uint8(data, pos));pos += 1
+			
+		etree.SubElement(wnddd, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
+		coordinate_count = RT.uint8(data, pos);pos += 1
+		etree.SubElement(wnddd, "coordinate_count").text = str(coordinate_count)
+		pad1 = RT.uint8(data, pos);pos += 1
+		if coordinate_count != 0:
+			wnddddd = etree.SubElement(tag, "Coords")
+			for i in xrange(coordinate_count):
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
+				
+		wndddddd = etree.SubElement(tag, "wnd4")
+		etree.SubElement(wndddddd, "offset").text = str(RT.uint32(data, pos));pos += 4
+		wndmat = etree.SubElement(tag, "wnd4mat")
+		etree.SubElement(wndmat, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
+		etree.SubElement(wndmat, "index").text = str(RT.uint8(data, pos));pos += 1
+		pad2 = RT.uint8(data, pos);pos += 1
+				
+		self.checkheader(data, pos)		
 		
 	def bnd1section(self, data, pos):
 		StartPos = pos
@@ -428,5 +484,3 @@ class ReadBflyt(object):
 		
 		with open("data.bin", "w") as dirpath:
 			dirpath.write(data)
-			
-			
