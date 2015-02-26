@@ -309,8 +309,40 @@ class WriteBflyt(object):
 		return grp1sec
 	
 	def writecnt1(self, sec):
-		TempSec = binascii.unhexlify(sec.find("dump").text)
+		name = sec.get("name")
+		NameLength = WT.by4(len(name))
 		
+		first = sec.findall("first")
+		second = sec.findall("second")
+		firstSec = ""
+		secondSec = ""
+		for i in first:
+			firstSec += struct.pack(">24s",i.text)
+		
+		Offset = []
+		try:
+			secondSec = struct.pack(">%ds"%WT.plusnull(len(second[0].text)),second[0].text)
+			Offset.append(4*len(second))
+		except:
+			pass
+		i = 1
+		while i < len(second):
+			Offset.append(len(secondSec) + Offset[0])
+			if second[i].text != None:
+				temp = struct.pack(">%ds"%WT.plusnull(len(second[i].text)),second[i].text)
+			else:
+				temp = struct.pack(">1s","")
+			secondSec += temp
+			i += 1
+			
+		while len(secondSec) % 4 != 0:
+			secondSec += "\x00"
+			
+		TempSec2 = struct.pack('>%sI' % len(Offset), *Offset)
+		TempSec2 += secondSec
+		TempSec = struct.pack(">I2H%ds" %NameLength, NameLength + 16, len(first), len(second), name)
+		TempSec += firstSec
+		TempSec += TempSec2
 		cnt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		cnt1sec += TempSec
 		self.FileSections += 1

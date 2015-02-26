@@ -182,7 +182,7 @@ class ReadBflyt(object):
 			
 			
 			texref = RT.BitExtract(flags, 2, 28)
-			TextureSRT = RT.BitExtract(flags, 3, 24)
+			TextureSRT = RT.BitExtract(flags, 3, 27)
 			print "%s has %d"%(MatName, TextureSRT)
 			
 			
@@ -344,6 +344,20 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="txt1")
 		pos = self.panesection(data, pos, tag)								# read pane info
+		# len1 = RT.uint16(data, pos);pos += 2
+		# len2 = RT.uint16(data, pos);pos += 2
+		# mat_num = RT.uint16(data, pos);pos += 2
+		# font_idx = RT.uint16(data, pos);pos += 2
+		# alignment = RT.uint8(data, pos);pos += 1
+		# unk_char = RT.uint8(data, pos);pos += 1
+		# pad = RT.uint16(data, pos);pos += 2
+		# name_offs = RT.uint32(data, pos);pos += 4
+		# color1 = RT.uint32(data, pos);pos += 4
+		# color2 = RT.uint32(data, pos);pos += 4
+		# font_size_x = RT.float4(data, pos);pos += 4
+		# font_size_y = RT.float4(data, pos);pos += 4
+		# char_space = RT.float4(data, pos);pos += 4
+		# line_space = RT.float4(data, pos);pos += 4
 		
 		
 		fullpos = StartPos + txt1length # debug skip section		
@@ -469,13 +483,34 @@ class ReadBflyt(object):
 				
 	def cnt1section(self, data, pos):
 		StartPos = pos
-		cnt1magic, cnt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
-		
+		cnt1magic, cnt1length, pos = self.ReadMagic(data,pos)				# read magic & section length		
 		tag = etree.SubElement(self.newroot, "tag", type="cnt1")
+		firstoffset = RT.uint32(data, pos);pos += 4
+		firstcount = RT.uint16(data, pos);pos += 2
+		secondcount = RT.uint16(data, pos);pos += 2
+		name = RT.getstr(data[pos:])
+		tag.attrib['name'] = name		
+		if firstoffset > 0:
+			pos = StartPos + firstoffset
+			i = 0
+			while i < firstcount:
+				etree.SubElement(tag, "first").text = RT.getstr(data[pos:]);pos += 24
+				i += 1
+							
+		if secondcount > 0:
+			entrypos = pos
+			secondoffsets = []
+			i = 0
+			while i < secondcount:
+				secondoffsets.append(RT.uint32(data, pos));pos += 4
+				i+=1
+			for j in secondoffsets:
+				pos = entrypos + j
+				etree.SubElement(tag, "second").text = RT.getstr(data[pos:])
+		
 		
 		
 		fullpos = StartPos + cnt1length # debug skip section		
-		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
 		self.checkheader(data, fullpos)		
 		
 		
