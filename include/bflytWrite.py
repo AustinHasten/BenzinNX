@@ -249,10 +249,10 @@ class WriteBflyt(object):
 				coordSec += struct.pack('>%sf' % len(texcoords), *texcoords)
 				
 		wnd4  = sec.find("wnd4")
-		offset = int(wnd4.find("offset").text)
-		wnd4mat = sec.find("wnd4mat")
-		wnd4matmaterial = self.MatList.index(wnd4mat.find("material").text)
-		index = int(wnd4mat.find("index").text)
+		offset = wnd4.findall("offset")
+		wnd4mat = sec.find("wnd4mat")		
+		wnd4matmat = wnd4mat.findall("material")
+		indexlist = wnd4mat.findall("index")
 		part1 = struct.pack('>4f4B2I16BH2B', float(coordinate[0].text), float(coordinate[1].text), float(coordinate[2].text), float(coordinate[3].text),
 							FrameCount, unk1, 0, 0, offset1, offset2,
 							int(color[0].get("R")), int(color[0].get("G")), int(color[0].get("B")), int(color[0].get("A")),
@@ -261,11 +261,21 @@ class WriteBflyt(object):
 							int(color[3].get("R")), int(color[3].get("G")), int(color[3].get("B")), int(color[3].get("A")),
 							material, coordinate_count, 0
 							)
-		part2 = struct.pack('>IH2B', offset, wnd4matmaterial, index, 0)
+		part2 = ""
+		part3 = ""
+		wnd4matmaterial = []
+		i = 0
+		while i < len(offset):
+			part2 += struct.pack('>I', int(offset[i].text))
+			part3 += struct.pack(">H2B",self.MatList.index(wnd4matmat[i].text),int(indexlist[i].text),0)
+			index = int(indexlist[i].text)
+			i += 1
+		
 		
 		TempSec += part1
 		TempSec += coordSec
 		TempSec += part2
+		TempSec += part3
 		wnd1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		wnd1sec += TempSec
 		self.FileSections += 1

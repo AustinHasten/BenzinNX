@@ -392,6 +392,7 @@ class ReadBflyt(object):
 	def wnd1section(self, data, pos):
 		StartPos = pos
 		wnd1magic, wnd1length, pos = self.ReadMagic(data,pos)				# read magic & section length
+		fullpos = StartPos + wnd1length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="wnd1")
 		pos = self.panesection(data, pos, tag)								# read pane info
@@ -399,7 +400,8 @@ class ReadBflyt(object):
 		for i in xrange(4):
 			etree.SubElement(wndd, "coordinate").text = str(RT.float4(data, pos));pos += 4
 			
-		etree.SubElement(wndd, "FrameCount").text = str(RT.uint8(data, pos));pos += 1
+		FrameCount = RT.uint8(data, pos);pos += 1
+		etree.SubElement(wndd, "FrameCount").text = str(FrameCount)
 		etree.SubElement(wndd, "unk1").text = str(RT.uint8(data, pos));pos += 1
 		pad = RT.uint16(data, pos);pos += 2
 		etree.SubElement(wndd, "offset1").text = str(RT.uint32(data, pos));pos += 4
@@ -429,11 +431,17 @@ class ReadBflyt(object):
 				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
 				
 		wndddddd = etree.SubElement(tag, "wnd4")
-		etree.SubElement(wndddddd, "offset").text = str(RT.uint32(data, pos));pos += 4
+		for i in xrange(FrameCount):
+			etree.SubElement(wndddddd, "offset").text = str(RT.uint32(data, pos));pos += 4
 		wndmat = etree.SubElement(tag, "wnd4mat")
-		etree.SubElement(wndmat, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
-		etree.SubElement(wndmat, "index").text = str(RT.uint8(data, pos));pos += 1
-		pad2 = RT.uint8(data, pos);pos += 1
+		for i in xrange(FrameCount):
+			etree.SubElement(wndmat, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
+			etree.SubElement(wndmat, "index").text = str(RT.uint8(data, pos));pos += 1
+			pad2 = RT.uint8(data, pos);pos += 1
+		
+		if pos != fullpos:
+			etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+			pos = fullpos
 				
 		self.checkheader(data, pos)		
 		
