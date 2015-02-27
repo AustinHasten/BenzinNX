@@ -178,6 +178,7 @@ class ReadBflyt(object):
 			colorback.attrib['B'] = str(back_color[2])
 			colorback.attrib['A'] = str(back_color[3])
 			flags = RT.uint32(data, pos);pos += 4
+			print flags
 			etree.SubElement(entries, "flags").text = str(flags)
 			
 			
@@ -203,9 +204,33 @@ class ReadBflyt(object):
 			elif flags == 1130:
 				etree.SubElement(entries, "dump").text = data[pos:pos+72].encode("hex")
 				pos += 72
+			elif flags == 32874:
+				etree.SubElement(entries, "dump").text = data[pos:pos+88].encode("hex")
+				pos += 88
+			elif flags == 32789:
+				etree.SubElement(entries, "dump").text = data[pos:pos+52].encode("hex")
+				pos += 52
 			elif flags == 533:
 				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
 				pos += 40
+			elif flags == 512:
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
+			elif flags == 65727:
+				etree.SubElement(entries, "dump").text = data[pos:pos+144].encode("hex")
+				pos += 144
+			elif flags == 106:
+				etree.SubElement(entries, "dump").text = data[pos:pos+68].encode("hex")
+				pos += 68
+			elif flags == 49258:
+				etree.SubElement(entries, "dump").text = data[pos:pos+100].encode("hex")
+				pos += 100
+			elif flags == 5738:
+				etree.SubElement(entries, "dump").text = data[pos:pos+84].encode("hex")
+				pos += 84
+			elif flags == 49343:
+				etree.SubElement(entries, "dump").text = data[pos:pos+136].encode("hex")
+				pos += 136
 			elif flags == 131072:
 				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
 				pos += 8

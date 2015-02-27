@@ -4,3 +4,6 @@ Usage
 main.py file
 
 file can be a bflyt or the xml program checks compatibility before converting file 
+
+Dependencies:-
+lxml
