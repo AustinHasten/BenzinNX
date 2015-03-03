@@ -7,3 +7,7 @@ file can be a bflyt or the xml program checks compatibility before converting fi
 
 Dependencies:-
 lxml
+py2exe for building
+
+Build :-
+Use python 2.7 and run the windows_build.py

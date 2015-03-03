@@ -31,9 +31,9 @@ class ReadBflyt(object):
 		elif magic == "pas1":
 			self.pas1section(data, pos)
 		elif magic == "pic1":
-			self.pic1section(data, pos)
+			self.pic1section(data, pos, None)
 		elif magic == "txt1":
-			self.txt1section(data, pos)
+			self.txt1section(data, pos, None)
 		elif magic == "wnd1":
 			self.wnd1section(data, pos)
 		elif magic == "bnd1":
@@ -53,7 +53,7 @@ class ReadBflyt(object):
 		elif len(data) == pos:
 			print "Done"			
 		else:
-			print "No code for %s section at %s" %(magic, hex(pos))
+			print "No code for %s section at %d" %(magic, pos)
 			#sys.exit(1)
 		
 	def ReadMagic(self, data, pos):
@@ -178,13 +178,13 @@ class ReadBflyt(object):
 			colorback.attrib['B'] = str(back_color[2])
 			colorback.attrib['A'] = str(back_color[3])
 			flags = RT.uint32(data, pos);pos += 4
-			print flags
+			#print flags
 			etree.SubElement(entries, "flags").text = str(flags)
 			
 			
 			texref = RT.BitExtract(flags, 2, 28)
 			TextureSRT = RT.BitExtract(flags, 3, 27)
-			print "%s has %d"%(MatName, TextureSRT)
+			#print "%s has %d"%(MatName, TextureSRT)
 			
 			
 			# loop = 0
@@ -308,11 +308,15 @@ class ReadBflyt(object):
 		
 		self.checkheader(data, pos)	
 		
-	def pic1section(self, data, pos):
+	def pic1section(self, data, pos, prt):
 		StartPos = pos
 		pic1magic, pic1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
-		tag = etree.SubElement(self.newroot, "tag", type="pic1")
+		if prt == None:
+			tag = etree.SubElement(self.newroot, "tag", type="pic1")
+		else:
+			tag = etree.SubElement(prt, "tag", type="pic1")
+			
 		pos = self.panesection(data, pos, tag)								# read pane info
 		vtxColorTL = RT.uint32(data, pos);pos += 4
 		vtxColorTR = RT.uint32(data, pos);pos += 4
@@ -361,13 +365,21 @@ class ReadBflyt(object):
 			coord.attrib['t'] = str(RT.float4(data, pos));pos += 4
 			i += 1
 		
-		self.checkheader(data, pos)	
+		if prt == None:
+			self.checkheader(data, pos)
+		else:
+			return
 		
-	def txt1section(self, data, pos):
+		
+	def txt1section(self, data, pos, prt):
 		StartPos = pos
 		txt1magic, txt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
-		tag = etree.SubElement(self.newroot, "tag", type="txt1")
+		if prt == None:
+			tag = etree.SubElement(self.newroot, "tag", type="txt1")
+		else:
+			tag = etree.SubElement(prt, "tag", type="txt1")
+		
 		pos = self.panesection(data, pos, tag)								# read pane info
 		# len1 = RT.uint16(data, pos);pos += 2
 		# len2 = RT.uint16(data, pos);pos += 2
@@ -387,7 +399,10 @@ class ReadBflyt(object):
 		
 		fullpos = StartPos + txt1length # debug skip section		
 		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
-		self.checkheader(data, fullpos)		
+		if prt == None:
+			self.checkheader(data, fullpos)
+		else:
+			return
 		
 	def wnd1section(self, data, pos):
 		StartPos = pos
@@ -461,10 +476,51 @@ class ReadBflyt(object):
 		
 		tag = etree.SubElement(self.newroot, "tag", type="prt1")
 		pos = self.panesection(data, pos, tag)								# read pane info
+		section = etree.SubElement(tag, "section")
+		count = RT.uint32(data, pos);pos += 4
+		unkfloat1 = RT.float4(data, pos);pos += 4
+		unkfloat2 = RT.float4(data, pos);pos += 4
+		unkfloat = etree.SubElement(section, "unkfloat")
+		unkfloat.attrib['x'] = str(unkfloat1)
+		unkfloat.attrib['y'] = str(unkfloat2)
+		i = 0
+		while i < count:
+			entryname = RT.getstr(data[pos:]);pos += 24
+			unk1 = RT.uint8(data, pos);pos += 1
+			unk2 = RT.uint8(data, pos);pos += 1
+			pad1 = RT.uint16(data, pos);pos += 2
+			entryoffset = RT.uint32(data, pos);pos += 4
+			pad2 = RT.uint32(data, pos);pos += 4
+			extraoffset = RT.uint32(data, pos);pos += 4
+			
+			entry = etree.SubElement(section, "entry")
+			entry.attrib['entryname'] = entryname
+			etree.SubElement(entry, "unk1").text = str(unk1)
+			etree.SubElement(entry, "unk2").text = str(unk2)
+			
+			 
+			if entryoffset > 0:
+				temppos = StartPos + entryoffset
+				magic = data[temppos:temppos + 4]
+				if magic == "pic1":
+					self.pic1section(data, temppos, entry)
+				elif magic == "txt1":
+					self.txt1section(data, temppos, entry)
+				
+			if extraoffset > 0:
+				temppos = StartPos + extraoffset
+				etree.SubElement(entry, "extradata").text = data[temppos:temppos + 48].encode("hex")
+				
+			
+			i += 1
+		
+		name = RT.getstr(data[pos:]);pos += RT.by4(len(name))
+		section.attrib['name'] = name
+		
 		
 		
 		fullpos = StartPos + prt1length # debug skip section		
-		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+		
 		self.checkheader(data, fullpos)		
 		
 	def pae1section(self, data, pos):

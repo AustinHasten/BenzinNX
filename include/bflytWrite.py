@@ -17,36 +17,52 @@ class WriteBflyt(object):
 			#print i.get('type')
 			if i.get('type') == "lyt1":
 				self.OutFile += self.writelyt1(i)
+				self.FileSections += 1
 			elif i.get('type') == "txl1":
 				self.OutFile += self.writetxl1(i)
+				self.FileSections += 1
 			elif i.get('type') == "fnl1":
 				self.OutFile += self.writetxl1(i)
+				self.FileSections += 1
 			elif i.get('type') == "mat1":
 				self.OutFile += self.writemat1(i)
+				self.FileSections += 1
 			elif i.get('type') == "pan1":
 				self.OutFile += self.writepan1(i)
+				self.FileSections += 1
 			elif i.get('type') == "pas1":
 				self.OutFile += self.writepas1(i)
+				self.FileSections += 1
 			elif i.get('type') == "pic1":
 				self.OutFile += self.writepic1(i)
+				self.FileSections += 1
 			elif i.get('type') == "bnd1":
 				self.OutFile += self.writepan1(i)
+				self.FileSections += 1
 			elif i.get('type') == "wnd1":
 				self.OutFile += self.writewnd1(i)
+				self.FileSections += 1
 			elif i.get('type') == "txt1":
 				self.OutFile += self.writetxt1(i)
+				self.FileSections += 1
 			elif i.get('type') == "prt1":
 				self.OutFile += self.writeprt1(i)
+				self.FileSections += 1
 			elif i.get('type') == "pae1":
 				self.OutFile += self.writepas1(i)
+				self.FileSections += 1
 			elif i.get('type') == "grp1":
 				self.OutFile += self.writegrp1(i)
+				self.FileSections += 1
 			elif i.get('type') == "grs1":
 				self.OutFile += self.writepas1(i)
+				self.FileSections += 1
 			elif i.get('type') == "gre1":
 				self.OutFile += self.writepas1(i)
+				self.FileSections += 1
 			elif i.get('type') == "cnt1":
 				self.OutFile += self.writecnt1(i)
+				self.FileSections += 1
 		
 		self.OutFile = self.header() + self.OutFile
 		self.debugfile(self.OutFile)
@@ -68,7 +84,6 @@ class WriteBflyt(object):
 		TempSec = struct.pack(">4b4f%ds"%WT.by4(len(filename)),drawnFromMiddle,pad,pad,pad,width,height,unk1,unk2,filename)
 		lyt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		lyt1sec += TempSec
-		self.FileSections += 1
 		return lyt1sec
 		
 	def writetxl1(self, sec):
@@ -93,7 +108,6 @@ class WriteBflyt(object):
 		TempSec += names
 		txl1sec = struct.pack(">4sI2h",sec.get('type'),int(len(TempSec))+12,NumTextures,0)
 		txl1sec += TempSec
-		self.FileSections += 1
 		return txl1sec
 		
 	def writefnl1(self, sec):
@@ -118,7 +132,6 @@ class WriteBflyt(object):
 		TempSec += names
 		fnl1sec = struct.pack(">4sI2h",sec.get('type'),int(len(TempSec))+12,NumTextures,0)
 		fnl1sec += TempSec
-		self.FileSections += 1
 		return fnl1sec
 		
 	def writemat1(self, sec):
@@ -156,24 +169,20 @@ class WriteBflyt(object):
 		TempSec2 += fullTempSec
 		mat1sec = struct.pack(">4sI2h",sec.get('type'),int(len(TempSec2))+12,len(data),0)
 		mat1sec += TempSec2
-		self.FileSections += 1
 		return mat1sec
 				
 	def writepan1(self, sec):
 		TempSec = self.writepaneinfo(sec)
 		pan1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
-		pan1sec += TempSec
-		self.FileSections += 1		
+		pan1sec += TempSec		
 		return pan1sec
 				
 	def writepas1(self, sec):
-		pas1sec = struct.pack(">4sI",sec.get('type'),8)
-		self.FileSections += 1	
+		pas1sec = struct.pack(">4sI",sec.get('type'),8)	
 		return pas1sec
 		
 	def writepic1(self, sec):
 		TempSec = self.writepaneinfo(sec)
-		i = 0
 		temp = sec.find("colors")
 		temp2 = temp.find("vtxColorTL")
 		vtxColorTL = int(temp2.get("R")) << 24
@@ -195,14 +204,7 @@ class WriteBflyt(object):
 		vtxColorBR |= int(temp2.get("G")) << 16
 		vtxColorBR |= int(temp2.get("B")) << 8
 		vtxColorBR |= int(temp2.get("A")) 
-		material = sec.find("material").text
-		while i < len(self.MatList):
-			if material != self.MatList[i]:
-				pass
-			else:
-				mat_num = i
-				break
-			i += 1
+		mat_num = self.MatList.index(sec.find("material").text)
 		temp = sec.find("coordinates")
 		num_texcoords = temp.findall('set')
 		texcoords = ""
@@ -221,8 +223,7 @@ class WriteBflyt(object):
 		TempSec += struct.pack(">4IH2B", vtxColorTL, vtxColorTR, vtxColorBL, vtxColorBR, mat_num, len(num_texcoords), 0)
 		TempSec += texcoords
 		pic1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
-		pic1sec += TempSec
-		self.FileSections += 1				
+		pic1sec += TempSec				
 		return pic1sec
 	
 	def writewnd1(self, sec):
@@ -278,18 +279,50 @@ class WriteBflyt(object):
 		TempSec += part3
 		wnd1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		wnd1sec += TempSec
-		self.FileSections += 1
 		return wnd1sec
 		
 	def writeprt1(self, sec):
 		TempSec = self.writepaneinfo(sec)
-		TempSec += binascii.unhexlify(sec.find("dump").text)
+		section = sec.find("section")
+		name = section.get("name")
+		unkfloat = section.find("unkfloat")
+		unkfloat1 = float(unkfloat.get("x"))
+		unkfloat2 = float(unkfloat.get("y"))
+		entry = section.findall("entry")
+		TempSec += struct.pack(">I2f", len(entry), unkfloat1, unkfloat2)
+		entrySec = ""
+		TempSec2 = ""
+		
+		for i in entry:
+			entryname = i.get("entryname")
+			unk1 = int(i.find("unk1").text)
+			unk2 = int(i.find("unk2").text)
+			entryoffset = 0
+			extraoffset = 0
+			tag = i.find("tag")
+			extradata = i.find("extradata")
+			if tag != None:
+				entryoffset = 96 + (40 * len(entry)) + len(TempSec2) + WT.by4(len(name))
+				tagtype = tag.get("type")
+				if tagtype == "txt1":
+					TempSec2 += self.writetxt1(tag)
+				if tagtype == "pic1":
+					TempSec2 += self.writepic1(tag)
+			if extradata != None:
+				extraoffset = 96 + (40 * len(entry)) + len(TempSec2) + WT.by4(len(name))
+				TempSec2 += binascii.unhexlify(extradata.text)
+		
+			entrySec += struct.pack(">24s2BH3I", entryname, unk1, unk2, 0, entryoffset, 0, extraoffset)
+		
+		entrySec += struct.pack(">%ds"%WT.by4(len(name)), name)
+				
+		TempSec += entrySec
+		TempSec += TempSec2
 		
 		prt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		prt1sec += TempSec
-		self.FileSections += 1
 		return prt1sec
-		
+		# self.debugfile(prt1sec)
 		
 	def writetxt1(self, sec):
 		TempSec = self.writepaneinfo(sec)
@@ -297,7 +330,6 @@ class WriteBflyt(object):
 		
 		txt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		txt1sec += TempSec
-		self.FileSections += 1
 		return txt1sec
 		
 	def writegrp1(self, sec):	
@@ -315,7 +347,6 @@ class WriteBflyt(object):
 		TempSec += TempSec2
 		grp1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		grp1sec += TempSec
-		self.FileSections += 1
 		return grp1sec
 	
 	def writecnt1(self, sec):
@@ -355,7 +386,6 @@ class WriteBflyt(object):
 		TempSec += TempSec2
 		cnt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		cnt1sec += TempSec
-		self.FileSections += 1
 		return cnt1sec
 		
 	def writepaneinfo(self, sec):
