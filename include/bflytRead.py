@@ -69,7 +69,7 @@ class ReadBflyt(object):
 		else:
 			print("Little endian not supported!")
 			sys.exit(1)
-		lyt_offsetree = RT.uint16(data, pos);pos += 2	# Should be 20
+		lyt_offset = RT.uint16(data, pos);pos += 2	# Should be 20
 		version = RT.uint16(data, pos);pos += 2 	# Always 0x0202
 		pad1 = RT.uint16(data, pos);pos += 2 		# Padding
 		filesize = RT.uint32(data, pos);pos += 4	# Full Filesize
@@ -103,7 +103,7 @@ class ReadBflyt(object):
 		loop = 0
 		FilenameOffset = []
 		while loop < NumFonts:
-			FilenameOffset.append(str(RT.uint32(data, pos)));pos += 4		# read name offsetrees
+			FilenameOffset.append(str(RT.uint32(data, pos)));pos += 4		# read name offsets
 			loop += 1
 		startoffontlist = pos
 		tag = etree.SubElement(self.newroot, "tag", type="fnl1")
@@ -178,25 +178,8 @@ class ReadBflyt(object):
 			colorback.attrib['B'] = str(back_color[2])
 			colorback.attrib['A'] = str(back_color[3])
 			flags = RT.uint32(data, pos);pos += 4
-			#print flags
+			print flags
 			etree.SubElement(entries, "flags").text = str(flags)
-			
-			
-			texref = RT.BitExtract(flags, 2, 28)
-			TextureSRT = RT.BitExtract(flags, 3, 27)
-			#print "%s has %d"%(MatName, TextureSRT)
-			
-			
-			# loop = 0
-			# while loop < texref:
-				# file = RT.uint16(data, pos);pos += 2
-				# wrap_s = RT.uint8(data, pos);pos += 1
-				# wrap_t = RT.uint8(data, pos);pos += 1
-				# texture = etree.SubElement(entries, "texture")
-				# texture.attrib['name'] = self.texturefiles[file]
-				# etree.SubElement(texture, "wrap_s").text = str(wrap_s)
-				# etree.SubElement(texture, "wrap_t").text = str(wrap_t)
-				# loop += 1
 				
 			if flags == 21:
 				etree.SubElement(entries, "dump").text = data[pos:pos+32].encode("hex")
@@ -240,6 +223,61 @@ class ReadBflyt(object):
 			elif flags == 1215:
 				etree.SubElement(entries, "dump").text = data[pos:pos+108].encode("hex")
 				pos += 108
+			elif flags == 5141:
+				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
+				pos += 40
+			
+			flags = 32874
+			# texref = RT.bit_extract(flags, 28, 31)
+			# TextureSRT = RT.bit_extract(flags, 24, 27)
+			# CoordGen = RT.bit_extract(flags, 20, 23)
+			# chanctrl = RT.bit_extract(flags, 6, 100)
+			# matcol = RT.bit_extract(flags, 4, 100)
+			# swapmodetable = RT.bit_extract(flags, 19, 100)
+			# indtex_srt = RT.bit_extract(flags, 17, 18)
+			# indtex_order = RT.bit_extract(flags, 14, 16)
+			# TevStages = RT.bit_extract(flags, 9, 13)
+			# alpha_compare = RT.bit_extract(flags, 8, 8)
+			# blend_mode = RT.bit_extract(flags, 7, 7)
+			
+			# texref = RT.BitExtract(flags, 2, 28)
+			# TextureSRT = RT.BitExtract(flags, 3, 24)
+			# CoordGen = RT.BitExtract(flags, 4, 20)
+			# chanctrl = RT.BitExtract(flags, 1, 6)
+			# matcol = RT.BitExtract(flags, 1, 4)
+			# swapmodetable = RT.BitExtract(flags, 1, 19)
+			# indtex_srt = RT.BitExtract(flags, 2, 17)
+			# indtex_order = RT.BitExtract(flags, 3, 14)
+			# TevStages = RT.BitExtract(flags, 5, 9)
+			# alpha_compare = RT.BitExtract(flags, 1, 8)
+			# blend_mode = RT.BitExtract(flags, 1, 7)
+			
+			
+			# print "%s has %d of texref"%(MatName, texref)
+			# print "%s has %d of TextureSRT"%(MatName, TextureSRT)
+			# print "%s has %d of CoordGen"%(MatName, CoordGen)
+			# print "%s has %d of chanctrl"%(MatName, chanctrl)
+			# print "%s has %d of matcol"%(MatName, matcol)
+			# print "%s has %d of swapmodetable"%(MatName, swapmodetable)
+			# print "%s has %d of indtex_srt"%(MatName, indtex_srt)
+			# print "%s has %d of indtex_order"%(MatName, indtex_order)
+			# print "%s has %d of TevStages"%(MatName, TevStages)
+			# print "%s has %d of alpha_compare"%(MatName, alpha_compare)
+			# print "%s has %d of blend_mode"%(MatName, blend_mode)
+			
+			
+			# loop = 0
+			# while loop < texref:
+				# file = RT.uint16(data, pos);pos += 2
+				# wrap_s = RT.uint8(data, pos);pos += 1
+				# wrap_t = RT.uint8(data, pos);pos += 1
+				# texture = etree.SubElement(entries, "texture")
+				# texture.attrib['name'] = self.texturefiles[file]
+				# etree.SubElement(texture, "wrap_s").text = str(wrap_s)
+				# etree.SubElement(texture, "wrap_t").text = str(wrap_t)
+				# loop += 1
+			# loop = 0
+			# while loop < TextureSRT:
 		
 		
 			i += 1
@@ -381,20 +419,78 @@ class ReadBflyt(object):
 			tag = etree.SubElement(prt, "tag", type="txt1")
 		
 		pos = self.panesection(data, pos, tag)								# read pane info
-		# len1 = RT.uint16(data, pos);pos += 2
-		# len2 = RT.uint16(data, pos);pos += 2
-		# mat_num = RT.uint16(data, pos);pos += 2
-		# font_idx = RT.uint16(data, pos);pos += 2
-		# alignment = RT.uint8(data, pos);pos += 1
-		# unk_char = RT.uint8(data, pos);pos += 1
-		# pad = RT.uint16(data, pos);pos += 2
-		# name_offs = RT.uint32(data, pos);pos += 4
-		# color1 = RT.uint32(data, pos);pos += 4
-		# color2 = RT.uint32(data, pos);pos += 4
-		# font_size_x = RT.float4(data, pos);pos += 4
-		# font_size_y = RT.float4(data, pos);pos += 4
-		# char_space = RT.float4(data, pos);pos += 4
-		# line_space = RT.float4(data, pos);pos += 4
+		len1 = RT.uint16(data, pos);pos += 2
+		len2 = RT.uint16(data, pos);pos += 2
+		mat_num = RT.uint16(data, pos);pos += 2
+		font_idx = RT.uint16(data, pos);pos += 2
+		alignment = RT.uint8(data, pos);pos += 1
+		unk_char = RT.uint8(data, pos);pos += 1
+		pad = RT.uint16(data, pos);pos += 2
+		name_offs = RT.uint32(data, pos);pos += 4
+		StartOfTextOffset = RT.uint32(data, pos);pos += 4
+		color1 = RT.uint32(data, pos);pos += 4
+		color2 = RT.uint32(data, pos);pos += 4
+		font_size_x = RT.float4(data, pos);pos += 4
+		font_size_y = RT.float4(data, pos);pos += 4
+		char_space = RT.float4(data, pos);pos += 4
+		line_space = RT.float4(data, pos);pos += 4
+		callnameoffset = RT.uint32(data, pos);pos += 4
+		unk1 = RT.uint32(data, pos);pos += 4
+		unkfloat1 = RT.float4(data, pos);pos += 4
+		unkfloat2 = RT.float4(data, pos);pos += 4
+		unkfloat3 = RT.float4(data, pos);pos += 4
+		unkcolor1 = RT.uint32(data, pos);pos += 4
+		unkcolor2 = RT.uint32(data, pos);pos += 4
+		unk2 = RT.uint32(data, pos);pos += 4
+		
+		
+		
+		etree.SubElement(tag, "length").text = str(len2)
+		etree.SubElement(tag, "material", name = self.MaterialNames[mat_num])
+		font = etree.SubElement(tag, "font", index=str(font_idx))
+		originTree = etree.SubElement(font, "alignment")
+		originTree.attrib['x'] = str(alignment%3)	
+		originTree.attrib['y'] = str(alignment/3)	
+		etree.SubElement(font, "whatAmI").text = str(unk_char)
+		etree.SubElement(font, "padding").text = str(pad)
+		etree.SubElement(font, "name_offs").text = str(name_offs)
+		# etree.SubElement(font, "OffsetStartOfText").text = str(StartOfTextOffset)
+		topcolor = etree.SubElement(tag, "topcolor")
+		topcolor.attrib['R'] = str(color1 >> 24)
+		topcolor.attrib['G'] = str(color1 >> 16 & 0xff)
+		topcolor.attrib['B'] = str(color1 >> 8 & 0xff)
+		topcolor.attrib['A'] = str(color1 >> 0 & 0xff)
+		bottomcolor = etree.SubElement(tag, "bottomcolor")
+		bottomcolor.attrib['R'] = str(color2 >> 24)
+		bottomcolor.attrib['G'] = str(color2 >> 16 & 0xff)
+		bottomcolor.attrib['B'] = str(color2 >> 8 & 0xff)
+		bottomcolor.attrib['A'] = str(color2 >> 0 & 0xff)
+		etree.SubElement(font, "xsize").text = str(font_size_x)
+		etree.SubElement(font, "ysize").text = str(font_size_y)
+		etree.SubElement(font, "charsize").text = str(char_space)
+		etree.SubElement(font, "linesize").text = str(line_space)
+		#etree.SubElement(font, "callnameoffset").text = str(callnameoffset)
+		new = etree.SubElement(tag, "newstuff")
+		etree.SubElement(new, "unk1").text = str(unk1)
+		etree.SubElement(new, "unkfloat1").text = str(unkfloat1)
+		etree.SubElement(new, "unkfloat2").text = str(unkfloat2)
+		etree.SubElement(new, "unkfloat3").text = str(unkfloat3)
+		unkcolor1tree = etree.SubElement(new, "unkcolor1")
+		unkcolor1tree.attrib['R'] = str(unkcolor1 >> 24)
+		unkcolor1tree.attrib['G'] = str(unkcolor1 >> 16 & 0xff)
+		unkcolor1tree.attrib['B'] = str(unkcolor1 >> 8 & 0xff)
+		unkcolor1tree.attrib['A'] = str(unkcolor1 >> 0 & 0xff)
+		unkcolor2tree = etree.SubElement(new, "unkcolor2")
+		unkcolor2tree.attrib['R'] = str(unkcolor2 >> 24)
+		unkcolor2tree.attrib['G'] = str(unkcolor2 >> 16 & 0xff)
+		unkcolor2tree.attrib['B'] = str(unkcolor2 >> 8 & 0xff)
+		unkcolor2tree.attrib['A'] = str(unkcolor2 >> 0 & 0xff)
+		etree.SubElement(new, "unk2").text = str(unk2)
+		etree.SubElement(tag, "text").text = data[pos:pos + len2].encode("hex");pos += RT.by4(len2)
+		callname = RT.getstr(data[pos:]);pos += RT.by4(int(len(callname)) +1)
+		etree.SubElement(tag, "callname").text = callname
+		
+		
 		
 		
 		fullpos = StartPos + txt1length # debug skip section		
@@ -603,6 +699,7 @@ class ReadBflyt(object):
 		self.checkheader(data, fullpos)		
 		
 		
+	
 		
 	def debugfile(self, data):
 		

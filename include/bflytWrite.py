@@ -326,10 +326,67 @@ class WriteBflyt(object):
 		
 	def writetxt1(self, sec):
 		TempSec = self.writepaneinfo(sec)
-		TempSec += binascii.unhexlify(sec.find("dump").text)
+		len2 = int(sec.find("length").text)
+		mat_num = self.MatList.index(sec.find("material").get("name"))
+		font = sec.find("font")
+		font_idx = int(font.get("index"))
+		temp = font.find("alignment")
+		alignmentL = int(temp.get("x"))
+		alignmentH = int(temp.get("y")) * 3
+		alignment = alignmentL + alignmentH
+		unk_char = int(font.find("whatAmI").text)
+		pad = int(font.find("padding").text)
+		name_offs = int(font.find("name_offs").text)
+		# StartOfTextOffset = int(font.find("OffsetStartOfText").text)		
+		xsize = float(font.find("xsize").text)
+		ysize = float(font.find("ysize").text)
+		charsize = float(font.find("charsize").text)
+		linesize = float(font.find("linesize").text)
+		#callnameoffset = int(font.find("callnameoffset").text)
+		
+		colors = sec.find("topcolor")
+		color1 = int(colors.get("R")) << 24
+		color1 |= int(colors.get("G")) << 16
+		color1 |= int(colors.get("B")) << 8
+		color1 |= int(colors.get("A")) 
+		colors = sec.find("bottomcolor")
+		color2 = int(colors.get("R")) << 24
+		color2 |= int(colors.get("G")) << 16
+		color2 |= int(colors.get("B")) << 8
+		color2 |= int(colors.get("A")) 
+		
+		newstuff = sec.find("newstuff")
+		unk1 = int(newstuff.find("unk1").text)
+		unkfloat1 = float(newstuff.find("unkfloat1").text)
+		unkfloat2 = float(newstuff.find("unkfloat2").text)
+		unkfloat3 = float(newstuff.find("unkfloat3").text)
+		colors = newstuff.find("unkcolor1")
+		unkcolor1 = int(colors.get("R")) << 24
+		unkcolor1 |= int(colors.get("G")) << 16
+		unkcolor1 |= int(colors.get("B")) << 8
+		unkcolor1 |= int(colors.get("A")) 
+		colors = newstuff.find("unkcolor2")
+		unkcolor2 = int(colors.get("R")) << 24
+		unkcolor2 |= int(colors.get("G")) << 16
+		unkcolor2 |= int(colors.get("B")) << 8
+		unkcolor2 |= int(colors.get("A")) 		
+		unk2 = int(newstuff.find("unk2").text)
+		
+		text = binascii.unhexlify(sec.find("text").text)		
+		while len(text) % 4 != 0:
+			text += "\x00"
+		callname = sec.find("callname").text
+				
+		TempSec += struct.pack(">4H2BH4I4f2I3f3I",len2, len2, mat_num, font_idx, alignment, unk_char, pad, name_offs , 160, color1, color2,
+								xsize, ysize, charsize, linesize, 160 + len(text), unk1, unkfloat1, unkfloat2, unkfloat3, unkcolor1, unkcolor2, unk2)
+								
+		TempSec += text
+		TempSec += struct.pack(">%ds"%WT.by4(len(callname)), callname)
 		
 		txt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		txt1sec += TempSec
+		
+		# self.debugfile(txt1sec)
 		return txt1sec
 		
 	def writegrp1(self, sec):	

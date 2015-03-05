@@ -39,3 +39,27 @@ class Reader(object):
 			i +=1
 		
 		return (value & mask) >> (32 - (start + count))	
+			
+	def bit_extract(self, num, start, end):
+	
+		if (end == 100):
+			end = start
+		mask = 0
+		first = 0
+		firstMask = 1
+		while first < 31-start+1:
+			firstMask *= 2
+			first += 1
+			
+		firstMask -= 1
+		secondMask = 1
+		
+		first=0
+		while first < 31-end:
+			secondMask *=2
+			first += 1
+			
+		secondMask -= 1;
+		mask = firstMask - secondMask
+		ret = (num & mask) >> (31 - end)
+		return ret
