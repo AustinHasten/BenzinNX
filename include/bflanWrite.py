@@ -19,7 +19,12 @@ class WriteBflan(object):
 				self.OutFile += self.writepai1(i)
 		
 		self.OutFile = self.header() + self.OutFile
-		self.debugfile(self.OutFile)
+		try:
+			with open(name + '.bflan', "w") as dirpath:
+				dirpath.write(self.OutFile)
+		except:
+			print "Destination file is in use"
+		#self.debugfile(self.OutFile)
 		
 		
 	def header(self):

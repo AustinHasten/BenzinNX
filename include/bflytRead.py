@@ -10,9 +10,9 @@ class ReadBflyt(object):
 		self.root = etree.Element("xmflyt")
 		self.checkheader(data, pos)
 		
-		#RT.indent(self.root)
-		with open(name + '.xml', "w") as dirpath:
-			dirpath.write(etree.tostring(self.root, pretty_print=True))
+		RT.indent(self.root)
+		with open(name + '.xmlyt', "w") as dirpath:
+			dirpath.write(etree.tostring(self.root))
 	
 	def checkheader(self, data, pos):
 		magic = data[pos:pos + 4]
@@ -76,6 +76,9 @@ class ReadBflyt(object):
 		sections = RT.uint16(data, pos);pos += 2	# Number of sections
 		pad2 = RT.uint16(data, pos);pos += 2 		# Padding
 		self.newroot = etree.SubElement(self.root, "version", Number=str(version))
+		if len(data) != filesize:
+			print "BFLYT filesize doesn't match"
+			sys.exit(1)
 		self.checkheader(data, pos)	
 		
 	def lyt1section(self, data, pos):
@@ -180,70 +183,11 @@ class ReadBflyt(object):
 			flags = RT.uint32(data, pos);pos += 4
 			print flags
 			etree.SubElement(entries, "flags").text = str(flags)
-				
-			if flags == 21:
-				etree.SubElement(entries, "dump").text = data[pos:pos+32].encode("hex")
-				pos += 32
-			elif flags == 1130:
-				etree.SubElement(entries, "dump").text = data[pos:pos+72].encode("hex")
-				pos += 72
-			elif flags == 32874:
-				etree.SubElement(entries, "dump").text = data[pos:pos+88].encode("hex")
-				pos += 88
-			elif flags == 32789:
-				etree.SubElement(entries, "dump").text = data[pos:pos+52].encode("hex")
-				pos += 52
-			elif flags == 533:
-				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
-				pos += 40
-			elif flags == 512:
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
-			elif flags == 65727:
-				etree.SubElement(entries, "dump").text = data[pos:pos+144].encode("hex")
-				pos += 144
-			elif flags == 106:
-				etree.SubElement(entries, "dump").text = data[pos:pos+68].encode("hex")
-				pos += 68
-			elif flags == 49258:
-				etree.SubElement(entries, "dump").text = data[pos:pos+100].encode("hex")
-				pos += 100
-			elif flags == 5738:
-				etree.SubElement(entries, "dump").text = data[pos:pos+84].encode("hex")
-				pos += 84
-			elif flags == 49343:
-				etree.SubElement(entries, "dump").text = data[pos:pos+136].encode("hex")
-				pos += 136
-			elif flags == 131072:
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
-			elif flags == 703:
-				etree.SubElement(entries, "dump").text = data[pos:pos+112].encode("hex")
-				pos += 112
-			elif flags == 1215:
-				etree.SubElement(entries, "dump").text = data[pos:pos+108].encode("hex")
-				pos += 108
-			elif flags == 5141:
-				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
-				pos += 40
 			
-			flags = 32874
-			# texref = RT.bit_extract(flags, 28, 31)
-			# TextureSRT = RT.bit_extract(flags, 24, 27)
-			# CoordGen = RT.bit_extract(flags, 20, 23)
-			# chanctrl = RT.bit_extract(flags, 6, 100)
-			# matcol = RT.bit_extract(flags, 4, 100)
-			# swapmodetable = RT.bit_extract(flags, 19, 100)
-			# indtex_srt = RT.bit_extract(flags, 17, 18)
-			# indtex_order = RT.bit_extract(flags, 14, 16)
-			# TevStages = RT.bit_extract(flags, 9, 13)
-			# alpha_compare = RT.bit_extract(flags, 8, 8)
-			# blend_mode = RT.bit_extract(flags, 7, 7)
-			
-			# texref = RT.BitExtract(flags, 2, 28)
-			# TextureSRT = RT.BitExtract(flags, 3, 24)
-			# CoordGen = RT.BitExtract(flags, 4, 20)
-			# chanctrl = RT.BitExtract(flags, 1, 6)
+			texref = RT.BitExtract(flags, 2, 30)
+			TextureSRT = RT.BitExtract(flags, 2, 28)
+			CoordGen = RT.BitExtract(flags, 2, 26)
+			chanctrl = RT.BitExtract(flags, 1, 6)
 			# matcol = RT.BitExtract(flags, 1, 4)
 			# swapmodetable = RT.BitExtract(flags, 1, 19)
 			# indtex_srt = RT.BitExtract(flags, 2, 17)
@@ -252,11 +196,104 @@ class ReadBflyt(object):
 			# alpha_compare = RT.BitExtract(flags, 1, 8)
 			# blend_mode = RT.BitExtract(flags, 1, 7)
 			
+			loop = 0
+			while loop < texref: # 4
+				file = RT.uint16(data, pos);pos += 2
+				wrap_s = RT.uint8(data, pos);pos += 1
+				wrap_t = RT.uint8(data, pos);pos += 1
+				texture = etree.SubElement(entries, "texture")
+				texture.attrib['name'] = self.texturefiles[file]
+				etree.SubElement(texture, "wrap_s").text = str(wrap_s)
+				etree.SubElement(texture, "wrap_t").text = str(wrap_t)
+				loop += 1
+				
+			loop = 0
+			while loop < TextureSRT: # 20
+				XTrans = RT.float4(data, pos);pos += 4
+				YTrans = RT.float4(data, pos);pos += 4
+				Rotate = RT.float4(data, pos);pos += 4
+				XScale = RT.float4(data, pos);pos += 4
+				YScale = RT.float4(data, pos);pos += 4
+				srt = etree.SubElement(entries, "TextureSRT")
+				etree.SubElement(srt, "XTrans").text = str(XTrans)
+				etree.SubElement(srt, "YTrans").text = str(YTrans)
+				etree.SubElement(srt, "Rotate").text = str(Rotate)
+				etree.SubElement(srt, "XScale").text = str(XScale)
+				etree.SubElement(srt, "YScale").text = str(YScale)
+				loop += 1
+		
+			if flags == 512:		# 0
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
+			elif flags == 5120:	# 0
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
+			elif flags == 131072:	# 0
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
+			elif flags == 21:		# 1
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
+			elif flags == 533:		# 1
+				etree.SubElement(entries, "dump").text = data[pos:pos+16].encode("hex")
+				pos += 16
+			elif flags == 1045:		# 1
+				etree.SubElement(entries, "dump").text = data[pos:pos+12].encode("hex")
+				pos += 12
+			elif flags == 5141:		# 1
+				etree.SubElement(entries, "dump").text = data[pos:pos+16].encode("hex")
+				pos += 16
+			elif flags == 32789:	# 1
+				etree.SubElement(entries, "dump").text = data[pos:pos+28].encode("hex")
+				pos += 28
+			elif flags == 106:		# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+20].encode("hex")
+				pos += 20
+			elif flags == 618:		# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+28].encode("hex")
+				pos += 28
+			elif flags == 1130:		# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+24].encode("hex")
+				pos += 24
+			elif flags == 5738:		# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+36].encode("hex")
+				pos += 36
+			elif flags == 32874:	# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
+				pos += 40
+			elif flags == 33386:	# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+48].encode("hex")
+				pos += 48
+			elif flags == 49258:	# 2
+				etree.SubElement(entries, "dump").text = data[pos:pos+52].encode("hex")
+				pos += 52
+			elif flags == 703:		# 3
+				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
+				pos += 40
+			elif flags == 1215:		# 3
+				etree.SubElement(entries, "dump").text = data[pos:pos+36].encode("hex")
+				pos += 36
+			elif flags == 5823:		# 3
+				etree.SubElement(entries, "dump").text = data[pos:pos+48].encode("hex")
+				pos += 48
+			elif flags == 32959:	# 3
+				etree.SubElement(entries, "dump").text = data[pos:pos+52].encode("hex")
+				pos += 52
+			elif flags == 49343:	# 3
+				etree.SubElement(entries, "dump").text = data[pos:pos+64].encode("hex")
+				pos += 64
+			elif flags == 65727:	# 3
+				etree.SubElement(entries, "dump").text = data[pos:pos+72].encode("hex")
+				pos += 72
 			
-			# print "%s has %d of texref"%(MatName, texref)
-			# print "%s has %d of TextureSRT"%(MatName, TextureSRT)
-			# print "%s has %d of CoordGen"%(MatName, CoordGen)
-			# print "%s has %d of chanctrl"%(MatName, chanctrl)
+		
+			
+			
+			
+			print "%s has %d of texref"%(MatName, texref)
+			print "%s has %d of TextureSRT"%(MatName, TextureSRT)
+			print "%s has %d of CoordGen"%(MatName, CoordGen)
+			print "%s has %d of chanctrl"%(MatName, chanctrl)
 			# print "%s has %d of matcol"%(MatName, matcol)
 			# print "%s has %d of swapmodetable"%(MatName, swapmodetable)
 			# print "%s has %d of indtex_srt"%(MatName, indtex_srt)
@@ -266,19 +303,6 @@ class ReadBflyt(object):
 			# print "%s has %d of blend_mode"%(MatName, blend_mode)
 			
 			
-			# loop = 0
-			# while loop < texref:
-				# file = RT.uint16(data, pos);pos += 2
-				# wrap_s = RT.uint8(data, pos);pos += 1
-				# wrap_t = RT.uint8(data, pos);pos += 1
-				# texture = etree.SubElement(entries, "texture")
-				# texture.attrib['name'] = self.texturefiles[file]
-				# etree.SubElement(texture, "wrap_s").text = str(wrap_s)
-				# etree.SubElement(texture, "wrap_t").text = str(wrap_t)
-				# loop += 1
-			# loop = 0
-			# while loop < TextureSRT:
-		
 		
 			i += 1
 		#-------------------------------------------------------------------------------------------------

@@ -39,27 +39,19 @@ class Reader(object):
 			i +=1
 		
 		return (value & mask) >> (32 - (start + count))	
-			
-	def bit_extract(self, num, start, end):
-	
-		if (end == 100):
-			end = start
-		mask = 0
-		first = 0
-		firstMask = 1
-		while first < 31-start+1:
-			firstMask *= 2
-			first += 1
-			
-		firstMask -= 1
-		secondMask = 1
 		
-		first=0
-		while first < 31-end:
-			secondMask *=2
-			first += 1
-			
-		secondMask -= 1;
-		mask = firstMask - secondMask
-		ret = (num & mask) >> (31 - end)
-		return ret
+		
+	def indent(self, elem, level=0):
+		i = "\n" + level*"\t"
+		if len(elem):
+			if not elem.text or not elem.text.strip():
+				elem.text = i + "\t"
+			if not elem.tail or not elem.tail.strip():
+				elem.tail = i
+			for elem in elem:
+				self.indent(elem, level+1)
+			if not elem.tail or not elem.tail.strip():
+				elem.tail = i
+		else:
+			if level and (not elem.tail or not elem.tail.strip()):
+				elem.tail = i

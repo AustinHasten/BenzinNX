@@ -11,3 +11,8 @@ class Writer(object):
 
 	def plusnull(self,length):
 		return length + 1
+
+	def errinfo(self, err):
+		exceptiondata = err.splitlines()
+		exceptionarray = [exceptiondata[-1]] + exceptiondata[1:-1]
+		return exceptionarray[-1].split('"')[1]

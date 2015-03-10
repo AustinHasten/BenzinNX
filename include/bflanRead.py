@@ -8,9 +8,9 @@ class ReadBflan(object):
 	def start(self, data, pos, name):
 		self.root = etree.Element("xmflan")
 		self.checkheader(data, pos)
-		
-		with open(name + '.xml', "w") as dirpath:
-			dirpath.write(etree.tostring(self.root, pretty_print=True))
+		RT.indent(self.root)
+		with open(name + '.xmlan', "w") as dirpath:
+			dirpath.write(etree.tostring(self.root))
 	
 	def checkheader(self, data, pos):
 		magic = data[pos:pos + 4]
