@@ -6,7 +6,7 @@ WT = Writer()
 
 class WriteBflan(object):
 
-	def start(self, data, name):
+	def start(self, data, name, output):
 		self.FileSections = 0
 		self.OutFile = ""
 		self.version = data.find("version")
@@ -20,8 +20,12 @@ class WriteBflan(object):
 		
 		self.OutFile = self.header() + self.OutFile
 		try:
-			with open(name + '.bflan', "w") as dirpath:
-				dirpath.write(self.OutFile)
+			if output == None:
+				with open(name + '.bflan', "wb") as dirpath:
+					dirpath.write(self.OutFile)
+			else:
+				with open(output, "wb") as dirpath:
+					dirpath.write(self.OutFile)
 		except:
 			print "Destination file is in use"
 		#self.debugfile(self.OutFile)

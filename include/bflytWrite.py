@@ -2,12 +2,12 @@ import struct, sys, traceback
 from WriteTypes import Writer 
 import binascii
 WT = Writer()
+import types
 
 
 class WriteBflyt(object):
 
-	def start(self, data, name):
-	
+	def start(self, data, name, output):
 		self.FileSections = 0
 		self.texturefiles = []
 		self.OutFile = ""
@@ -67,8 +67,12 @@ class WriteBflyt(object):
 		
 		self.OutFile = self.header() + self.OutFile
 		try:
-			with open(name + '.bflyt', "w") as dirpath:
-				dirpath.write(self.OutFile)
+			if output == None:
+				with open(name + '.bflyt', "wb") as dirpath:
+					dirpath.write(self.OutFile)
+			else:
+				with open(output, "wb") as dirpath:
+					dirpath.write(self.OutFile)
 		except:
 			print "Destination file is in use"
 		#self.debugfile(self.OutFile)
@@ -177,8 +181,10 @@ class WriteBflyt(object):
 						except ValueError:
 							print "%s texture file not found in txl1" %loop.get("name")
 							sys.exit(1)
-						wrap_s = int(loop.find("wrap_s").text)
-						wrap_t = int(loop.find("wrap_t").text)
+							
+						
+						wrap_s = WT.RepresentsInt(loop.find("wrap_s").text, types.wraps)
+						wrap_t = WT.RepresentsInt(loop.find("wrap_t").text, types.wraps)
 						TempSec += struct.pack(">H2B", file, wrap_s, wrap_t)
 				
 				TextureSRT = i.findall("TextureSRT")
@@ -354,6 +360,12 @@ class WriteBflyt(object):
 						TempSec2 += self.writetxt1(tag)
 					if tagtype == "pic1":
 						TempSec2 += self.writepic1(tag)
+					if tagtype == "wnd1":
+						TempSec2 += self.writewnd1(tag)
+					if tagtype == "bnd1":
+						TempSec2 += self.writebnd1(tag)
+					if tagtype == "prt1":
+						TempSec2 += self.writeprt1(tag)
 				if extradata != None:
 					extraoffset = 96 + (40 * len(entry)) + len(TempSec2) + WT.by4(len(name))
 					TempSec2 += binascii.unhexlify(extradata.text)
@@ -375,7 +387,8 @@ class WriteBflyt(object):
 	def writetxt1(self, sec):
 		try:
 			TempSec = self.writepaneinfo(sec)
-			len2 = int(sec.find("length").text)
+			len1 = int(sec.find("length1").text)
+			len2 = int(sec.find("length2").text)
 			mat_num = self.MatErr(sec.find("material").get("name"))
 			font = sec.find("font")
 			font_idx = int(font.get("index"))
@@ -384,7 +397,7 @@ class WriteBflyt(object):
 			alignmentH = int(temp.get("y")) * 3
 			alignment = alignmentL + alignmentH
 			unk_char = int(font.find("whatAmI").text)
-			pad = int(font.find("padding").text)
+			unk = int(font.find("unk").text)
 			name_offs = int(font.find("name_offs").text)
 			# StartOfTextOffset = int(font.find("OffsetStartOfText").text)		
 			xsize = float(font.find("xsize").text)
@@ -426,7 +439,7 @@ class WriteBflyt(object):
 				text += "\x00"
 			callname = sec.find("callname").text
 					
-			TempSec += struct.pack(">4H2BH4I4f2I3f3I",len2, len2, mat_num, font_idx, alignment, unk_char, pad, name_offs , 160, color1, color2,
+			TempSec += struct.pack(">4H2BH4I4f2I3f3I",len1, len2, mat_num, font_idx, alignment, unk_char, unk, name_offs , 160, color1, color2,
 									xsize, ysize, charsize, linesize, 160 + len(text), unk1, unkfloat1, unkfloat2, unkfloat3, unkcolor1, unkcolor2, unk2)
 									
 			TempSec += text
@@ -549,6 +562,7 @@ class WriteBflyt(object):
 		except ValueError:
 			print "No data in mat1 for %s" %(data)
 			sys.exit(1)
+		
 		
 	def debugfile(self, data):
 		try:
