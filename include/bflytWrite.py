@@ -75,6 +75,7 @@ class WriteBflyt(object):
 					dirpath.write(self.OutFile)
 		except:
 			print "Destination file is in use"
+		#self.debugfile(self.OutFile)
 		
 		
 	def header(self):
@@ -279,13 +280,12 @@ class WriteBflyt(object):
 			coordinate = wnd.findall("coordinate")		
 			FrameCount = int(wnd.find("FrameCount").text)
 			unk1 = int(wnd.find("unk1").text)
-			# offset1 = int(wnd.find("offset1").text)
-			# offset2 = int(wnd.find("offset2").text)
+			offset1 = int(wnd.find("offset1").text)
+			offset2 = int(wnd.find("offset2").text)
 			wnd1 = sec.find("wnd1")
 			color = wnd1.findall("color")
 			material = self.MatErr(wnd1.find("material").text)
 			coordinate_count = int(wnd1.find("coordinate_count").text)
-			offset2 = 132 + 32 * coordinate_count
 			coordSec = ""
 			if coordinate_count > 0:
 				Coords = sec.findall("Coords")
@@ -297,26 +297,25 @@ class WriteBflyt(object):
 					
 					coordSec += struct.pack('>%sf' % len(texcoords), *texcoords)
 					
-			# wnd4  = sec.find("wnd4")
-			# offset = wnd4.findall("offset")
+			wnd4  = sec.find("wnd4")
+			offset = wnd4.findall("offset")
 			wnd4mat = sec.find("wnd4mat")		
 			wnd4matmat = wnd4mat.findall("material")
 			indexlist = wnd4mat.findall("index")
 			part1 = struct.pack('>4f4B2I16BH2B', float(coordinate[0].text), float(coordinate[1].text), float(coordinate[2].text), float(coordinate[3].text),
-								FrameCount, unk1, 0, 0, 112, offset2,
+								FrameCount, unk1, 0, 0, offset1, offset2,
 								int(color[0].get("R")), int(color[0].get("G")), int(color[0].get("B")), int(color[0].get("A")),
 								int(color[1].get("R")), int(color[1].get("G")), int(color[1].get("B")), int(color[1].get("A")),
 								int(color[2].get("R")), int(color[2].get("G")), int(color[2].get("B")), int(color[2].get("A")),
 								int(color[3].get("R")), int(color[3].get("G")), int(color[3].get("B")), int(color[3].get("A")),
 								material, coordinate_count, 0
 								)
-			offset = len(TempSec) + len(part1) + len(coordSec) + 8
-			part2 = struct.pack('>I', offset + 4 * len(wnd4matmat))
-			part3 = struct.pack(">H2B",self.MatErr(wnd4matmat[0].text),int(indexlist[0].text),0)
+			part2 = ""
+			part3 = ""
 			wnd4matmaterial = []
-			i = 1
-			while i < len(wnd4matmat):
-				part2 += struct.pack('>I', offset + 4 * len(wnd4matmat) + 4 * i)
+			i = 0
+			while i < len(offset):
+				part2 += struct.pack('>I', int(offset[i].text))
 				part3 += struct.pack(">H2B",self.MatErr(wnd4matmat[i].text),int(indexlist[i].text),0)
 				index = int(indexlist[i].text)
 				i += 1
