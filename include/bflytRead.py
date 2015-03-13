@@ -59,7 +59,7 @@ class ReadBflyt(object):
 			print "Done"			
 		else:
 			print "No code for %s section at %d" %(magic, pos)
-			#sys.exit(1)
+			sys.exit(1)
 		
 	def ReadMagic(self, data, pos):
 		magic = data[pos:pos + 4]; pos += 4
@@ -436,8 +436,7 @@ class ReadBflyt(object):
 			self.checkheader(data, pos)
 		else:
 			return
-		
-		
+				
 	def txt1section(self, data, pos, prt):
 		StartPos = pos
 		txt1magic, txt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
@@ -548,8 +547,8 @@ class ReadBflyt(object):
 		etree.SubElement(wndd, "FrameCount").text = str(FrameCount)
 		etree.SubElement(wndd, "unk1").text = str(RT.uint8(data, pos));pos += 1
 		pad = RT.uint16(data, pos);pos += 2
-		etree.SubElement(wndd, "offset1").text = str(RT.uint32(data, pos));pos += 4
-		etree.SubElement(wndd, "offset2").text = str(RT.uint32(data, pos));pos += 4
+		offset1 = str(RT.uint32(data, pos));pos += 4
+		offset2 = str(RT.uint32(data, pos));pos += 4
 		wnddd = etree.SubElement(tag, "wnd1")
 		for i in xrange(4):
 			color =etree.SubElement(wnddd, "color")
@@ -574,9 +573,9 @@ class ReadBflyt(object):
 				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
 				etree.SubElement(wnddddd, "texcoord").text = str(RT.float4(data, pos));pos += 4
 				
-		wndddddd = etree.SubElement(tag, "wnd4")
+		wnd4offset = []
 		for i in xrange(FrameCount):
-			etree.SubElement(wndddddd, "offset").text = str(RT.uint32(data, pos));pos += 4
+			wnd4offset.append(str(RT.uint32(data, pos)));pos += 4
 		wndmat = etree.SubElement(tag, "wnd4mat")
 		for i in xrange(FrameCount):
 			etree.SubElement(wndmat, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
@@ -666,7 +665,7 @@ class ReadBflyt(object):
 			
 			i += 1
 		
-		name = RT.getstr(data[pos:]);pos += RT.by4(len(name))
+		name = RT.getstr(data[pos:]);pos += RT.by4(len(name) + 1)
 		section.attrib['name'] = name
 		
 		
@@ -755,12 +754,7 @@ class ReadBflyt(object):
 		
 		fullpos = StartPos + cnt1length # debug skip section		
 		self.checkheader(data, fullpos)		
-		
-		
-	# def setup(self):
-		# self.wraps = ["GX2_TEX_CLAMP_WRAP", "GX2_TEX_CLAMP_MIRROR", "GX2_TEX_CLAMP_CLAMP", "GX2_TEX_CLAMP_MIRROR_ONCE",
-						# "GX2_TEX_CLAMP_CLAMP_HALF_BORDER", "GX2_TEX_CLAMP_MIRROR_ONCE_HALF_BORDER", "GX2_TEX_CLAMP_CLAMP_BORDER", "GX2_TEX_CLAMP_MIRROR_ONCE_BORDER" ]
-		
+			
 	def debugfile(self, data):
 		
 		with open("data.bin", "w") as dirpath:
