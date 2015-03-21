@@ -293,19 +293,31 @@ class ReadBflyt(object):
 			
 		
 			
+			# flags = 131072
+			# texref = RT.BitExtract(flags, 2, 30)
+			# TextureSRT = RT.BitExtract(flags, 2, 28)
+			# CoordGen = RT.BitExtract(flags, 2, 26)
+			# chanctrl = RT.BitExtract(flags, 1, 6)
+			# matcol = RT.BitExtract(flags, 1, 4)
+			# swapmodetable = RT.BitExtract(flags, 1, 19)
+			# indtex_srt = RT.BitExtract(flags, 2, 17)
+			# indtex_order = RT.BitExtract(flags, 3, 14)
+			# TevStages = RT.BitExtract(flags, 5, 9)
+			# alpha_compare = RT.BitExtract(flags, 1, 8)
+			# blend_mode = RT.BitExtract(flags, 1, 7)
 			
 			
-			# print "%s has %d of texref"%(MatName, texref)
-			# print "%s has %d of TextureSRT"%(MatName, TextureSRT)
-			# print "%s has %d of CoordGen"%(MatName, CoordGen)
-			# print "%s has %d of chanctrl"%(MatName, chanctrl)
-			# print "%s has %d of matcol"%(MatName, matcol)
-			# print "%s has %d of swapmodetable"%(MatName, swapmodetable)
-			# print "%s has %d of indtex_srt"%(MatName, indtex_srt)
-			# print "%s has %d of indtex_order"%(MatName, indtex_order)
-			# print "%s has %d of TevStages"%(MatName, TevStages)
-			# print "%s has %d of alpha_compare"%(MatName, alpha_compare)
-			# print "%s has %d of blend_mode"%(MatName, blend_mode)
+			# print "%s has flag %d and %d of texref"%(MatName, flags, texref)
+			# print "%s has flag %d and %d of TextureSRT"%(MatName, flags, TextureSRT)
+			# print "%s has flag %d and %d of CoordGen"%(MatName, flags, CoordGen)
+			# print "%s has flag %d and %d of chanctrl"%(MatName, flags, chanctrl)
+			# print "%s has flag %d and %d of matcol"%(MatName, flags, matcol)
+			# print "%s has flag %d and %d of swapmodetable"%(MatName, flags, swapmodetable)
+			# print "%s has flag %d and %d of indtex_srt"%(MatName, flags, indtex_srt)
+			# print "%s has flag %d and %d of indtex_order"%(MatName, flags, indtex_order)
+			# print "%s has flag %d and %d of TevStages"%(MatName, flags, TevStages)
+			# print "%s has flag %d and %d of alpha_compare"%(MatName, flags, alpha_compare)
+			# print "%s has flag %d and %d of blend_mode"%(MatName, flags, blend_mode)
 			
 			
 		
@@ -334,24 +346,24 @@ class ReadBflyt(object):
 		height = RT.float4(data, pos);pos += 4
 		tag.attrib['name'] = name	
 		etree.SubElement(tag, "visible").text = str(flags & 1)
-		etree.SubElement(tag, "WidescreenAffected").text = str((flags & 2) >>1)		# Not sure if this is still needed
-		etree.SubElement(tag, "flag").text = str((flags & 4) >>2)
+		etree.SubElement(tag, "TransmitAlpha2Children").text = str((flags & 2) >>1)
+		etree.SubElement(tag, "PositionAdjustment").text = str((flags & 4) >>2)
 		originTree = etree.SubElement(tag, "origin")
 		originTree.attrib['x'] = str(origin%3)	
 		originTree.attrib['y'] = str(origin/3)	
 		etree.SubElement(tag, "alpha").text = str(alpha)
 		etree.SubElement(tag, "unk").text = str(unk)
 		translateTree = etree.SubElement(tag, "translate")
-		etree.SubElement(translateTree, "x").text = str(XTrans)
-		etree.SubElement(translateTree, "y").text = str(YTrans)
-		etree.SubElement(translateTree, "z").text = str(ZTrans)
+		etree.SubElement(translateTree, "x").text = "%.18f" %XTrans
+		etree.SubElement(translateTree, "y").text = "%.18f" %YTrans
+		etree.SubElement(translateTree, "z").text = "%.18f" %ZTrans
 		rotateTree = etree.SubElement(tag, "rotate")
-		etree.SubElement(rotateTree, "x").text = str(XRotate)
-		etree.SubElement(rotateTree, "y").text = str(YRotate)
-		etree.SubElement(rotateTree, "z").text = str(ZRotate)
+		etree.SubElement(rotateTree, "x").text = "%.18f" %XRotate
+		etree.SubElement(rotateTree, "y").text = "%.18f" %YRotate
+		etree.SubElement(rotateTree, "z").text = "%.18f" %ZRotate
 		scaleTree = etree.SubElement(tag, "scale")
-		etree.SubElement(scaleTree, "x").text = str(XScale)
-		etree.SubElement(scaleTree, "y").text = str(YScale)
+		etree.SubElement(scaleTree, "x").text = "%.18f" %XScale
+		etree.SubElement(scaleTree, "y").text = "%.18f" %YScale
 		sizeTree = etree.SubElement(tag, "size")
 		etree.SubElement(sizeTree, "x").text = str(width)
 		etree.SubElement(sizeTree, "y").text = str(height)
@@ -452,7 +464,7 @@ class ReadBflyt(object):
 		mat_num = RT.uint16(data, pos);pos += 2
 		font_idx = RT.uint16(data, pos);pos += 2
 		alignment = RT.uint8(data, pos);pos += 1
-		unk_char = RT.uint8(data, pos);pos += 1
+		LineAlignment = RT.uint8(data, pos);pos += 1
 		unk = RT.uint16(data, pos);pos += 2
 		name_offs = RT.uint32(data, pos);pos += 4
 		StartOfTextOffset = RT.uint32(data, pos);pos += 4
@@ -463,7 +475,7 @@ class ReadBflyt(object):
 		char_space = RT.float4(data, pos);pos += 4
 		line_space = RT.float4(data, pos);pos += 4
 		callnameoffset = RT.uint32(data, pos);pos += 4
-		unk1 = RT.uint32(data, pos);pos += 4
+		unkfloat = RT.float4(data, pos);pos += 4
 		unkfloat1 = RT.float4(data, pos);pos += 4
 		unkfloat2 = RT.float4(data, pos);pos += 4
 		unkfloat3 = RT.float4(data, pos);pos += 4
@@ -473,14 +485,14 @@ class ReadBflyt(object):
 		
 		
 		
-		etree.SubElement(tag, "length1").text = str(len1)
-		etree.SubElement(tag, "length2").text = str(len2)
+		etree.SubElement(tag, "length").text = str(len2)
+		etree.SubElement(tag, "restrictlength").text = str(len1)
 		etree.SubElement(tag, "material", name = self.MaterialNames[mat_num])
 		font = etree.SubElement(tag, "font", index=str(font_idx))
 		originTree = etree.SubElement(font, "alignment")
 		originTree.attrib['x'] = str(alignment%3)	
 		originTree.attrib['y'] = str(alignment/3)	
-		etree.SubElement(font, "whatAmI").text = str(unk_char)
+		etree.SubElement(font, "LineAlignment").text = str(LineAlignment)
 		etree.SubElement(font, "unk").text = str(unk)
 		etree.SubElement(font, "name_offs").text = str(name_offs)
 		# etree.SubElement(font, "OffsetStartOfText").text = str(StartOfTextOffset)
@@ -500,10 +512,10 @@ class ReadBflyt(object):
 		etree.SubElement(font, "linesize").text = str(line_space)
 		# etree.SubElement(font, "callnameoffset").text = str(callnameoffset)
 		new = etree.SubElement(tag, "newstuff")
-		etree.SubElement(new, "unk1").text = str(unk1)
-		etree.SubElement(new, "unkfloat1").text = str(unkfloat1)
-		etree.SubElement(new, "unkfloat2").text = str(unkfloat2)
-		etree.SubElement(new, "unkfloat3").text = str(unkfloat3)
+		etree.SubElement(new, "unkfloat").text = "%.18f" %unkfloat
+		etree.SubElement(new, "unkfloat1").text = "%.18f" %unkfloat1
+		etree.SubElement(new, "unkfloat2").text = "%.18f" %unkfloat2
+		etree.SubElement(new, "unkfloat3").text = "%.18f" %unkfloat3
 		unkcolor1tree = etree.SubElement(new, "unkcolor1")
 		unkcolor1tree.attrib['R'] = str(unkcolor1 >> 24)
 		unkcolor1tree.attrib['G'] = str(unkcolor1 >> 16 & 0xff)

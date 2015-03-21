@@ -75,7 +75,6 @@ class WriteBflyt(object):
 					dirpath.write(self.OutFile)
 		except:
 			print "Destination file is in use"
-		#self.debugfile(self.OutFile)
 		
 		
 	def header(self):
@@ -280,12 +279,13 @@ class WriteBflyt(object):
 			coordinate = wnd.findall("coordinate")		
 			FrameCount = int(wnd.find("FrameCount").text)
 			unk1 = int(wnd.find("unk1").text)
-			offset1 = int(wnd.find("offset1").text)
-			offset2 = int(wnd.find("offset2").text)
+			# offset1 = int(wnd.find("offset1").text)
+			# offset2 = int(wnd.find("offset2").text)
 			wnd1 = sec.find("wnd1")
 			color = wnd1.findall("color")
 			material = self.MatErr(wnd1.find("material").text)
 			coordinate_count = int(wnd1.find("coordinate_count").text)
+			offset2 = 132 + 32 * coordinate_count
 			coordSec = ""
 			if coordinate_count > 0:
 				Coords = sec.findall("Coords")
@@ -297,25 +297,26 @@ class WriteBflyt(object):
 					
 					coordSec += struct.pack('>%sf' % len(texcoords), *texcoords)
 					
-			wnd4  = sec.find("wnd4")
-			offset = wnd4.findall("offset")
+			# wnd4  = sec.find("wnd4")
+			# offset = wnd4.findall("offset")
 			wnd4mat = sec.find("wnd4mat")		
 			wnd4matmat = wnd4mat.findall("material")
 			indexlist = wnd4mat.findall("index")
 			part1 = struct.pack('>4f4B2I16BH2B', float(coordinate[0].text), float(coordinate[1].text), float(coordinate[2].text), float(coordinate[3].text),
-								FrameCount, unk1, 0, 0, offset1, offset2,
+								FrameCount, unk1, 0, 0, 112, offset2,
 								int(color[0].get("R")), int(color[0].get("G")), int(color[0].get("B")), int(color[0].get("A")),
 								int(color[1].get("R")), int(color[1].get("G")), int(color[1].get("B")), int(color[1].get("A")),
 								int(color[2].get("R")), int(color[2].get("G")), int(color[2].get("B")), int(color[2].get("A")),
 								int(color[3].get("R")), int(color[3].get("G")), int(color[3].get("B")), int(color[3].get("A")),
 								material, coordinate_count, 0
 								)
-			part2 = ""
-			part3 = ""
+			offset = len(TempSec) + len(part1) + len(coordSec) + 8
+			part2 = struct.pack('>I', offset + 4 * len(wnd4matmat))
+			part3 = struct.pack(">H2B",self.MatErr(wnd4matmat[0].text),int(indexlist[0].text),0)
 			wnd4matmaterial = []
-			i = 0
-			while i < len(offset):
-				part2 += struct.pack('>I', int(offset[i].text))
+			i = 1
+			while i < len(wnd4matmat):
+				part2 += struct.pack('>I', offset + 4 * len(wnd4matmat) + 4 * i)
 				part3 += struct.pack(">H2B",self.MatErr(wnd4matmat[i].text),int(indexlist[i].text),0)
 				index = int(indexlist[i].text)
 				i += 1
@@ -387,8 +388,8 @@ class WriteBflyt(object):
 	def writetxt1(self, sec):
 		try:
 			TempSec = self.writepaneinfo(sec)
-			len1 = int(sec.find("length1").text)
-			len2 = int(sec.find("length2").text)
+			len1 = int(sec.find("restrictlength").text)
+			len2 = int(sec.find("length").text)
 			mat_num = self.MatErr(sec.find("material").get("name"))
 			font = sec.find("font")
 			font_idx = int(font.get("index"))
@@ -396,7 +397,7 @@ class WriteBflyt(object):
 			alignmentL = int(temp.get("x"))
 			alignmentH = int(temp.get("y")) * 3
 			alignment = alignmentL + alignmentH
-			unk_char = int(font.find("whatAmI").text)
+			LineAlignment = int(font.find("LineAlignment").text)
 			unk = int(font.find("unk").text)
 			name_offs = int(font.find("name_offs").text)
 			# StartOfTextOffset = int(font.find("OffsetStartOfText").text)		
@@ -418,7 +419,7 @@ class WriteBflyt(object):
 			color2 |= int(colors.get("A")) 
 			
 			newstuff = sec.find("newstuff")
-			unk1 = int(newstuff.find("unk1").text)
+			unkfloat = float(newstuff.find("unkfloat").text)
 			unkfloat1 = float(newstuff.find("unkfloat1").text)
 			unkfloat2 = float(newstuff.find("unkfloat2").text)
 			unkfloat3 = float(newstuff.find("unkfloat3").text)
@@ -439,8 +440,8 @@ class WriteBflyt(object):
 				text += "\x00"
 			callname = sec.find("callname").text
 					
-			TempSec += struct.pack(">4H2BH4I4f2I3f3I",len1, len2, mat_num, font_idx, alignment, unk_char, unk, name_offs , 160, color1, color2,
-									xsize, ysize, charsize, linesize, 160 + len(text), unk1, unkfloat1, unkfloat2, unkfloat3, unkcolor1, unkcolor2, unk2)
+			TempSec += struct.pack(">4H2BH4I4f2I3f3I",len1, len2, mat_num, font_idx, alignment, LineAlignment, unk, name_offs , 160, color1, color2,
+									xsize, ysize, charsize, linesize, 160 + len(text), unkfloat, unkfloat1, unkfloat2, unkfloat3, unkcolor1, unkcolor2, unk2)
 									
 			TempSec += text
 			TempSec += struct.pack(">%ds"%WT.by4(len(callname)), callname)
@@ -514,9 +515,9 @@ class WriteBflyt(object):
 		name = sec.get("name")
 		temp = sec.find("visible")
 		flag = int(temp.text) 
-		temp = sec.find("WidescreenAffected")
+		temp = sec.find("TransmitAlpha2Children")
 		flag |= int(temp.text) << 1
-		temp = sec.find("flag")
+		temp = sec.find("PositionAdjustment")
 		flag |= int(temp.text) << 2
 		temp = sec.find("origin")
 		originL = int(temp.get("x"))
