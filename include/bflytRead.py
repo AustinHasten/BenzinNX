@@ -739,31 +739,33 @@ class ReadBflyt(object):
 		StartPos = pos
 		cnt1magic, cnt1length, pos = self.ReadMagic(data,pos)				# read magic & section length		
 		tag = etree.SubElement(self.newroot, "tag", type="cnt1")
-		firstoffset = RT.uint32(data, pos);pos += 4
-		firstcount = RT.uint16(data, pos);pos += 2
-		secondcount = RT.uint16(data, pos);pos += 2
-		name = RT.getstr(data[pos:])
-		tag.attrib['name'] = name		
-		if firstoffset > 0:
-			pos = StartPos + firstoffset
-			i = 0
-			while i < firstcount:
-				etree.SubElement(tag, "first").text = RT.getstr(data[pos:]);pos += 24
-				i += 1
-							
-		if secondcount > 0:
-			entrypos = pos
-			secondoffsets = []
-			i = 0
-			while i < secondcount:
-				secondoffsets.append(RT.uint32(data, pos));pos += 4
-				i+=1
-			for j in secondoffsets:
-				pos = entrypos + j
-				etree.SubElement(tag, "second").text = RT.getstr(data[pos:])
-		
-		
-		
+		try:
+			firstoffset = RT.uint32(data, pos);pos += 4
+			firstcount = RT.uint16(data, pos);pos += 2
+			secondcount = RT.uint16(data, pos);pos += 2
+			name = RT.getstr(data[pos:])
+			tag.attrib['name'] = name		
+			if firstoffset > 0:
+				pos = StartPos + firstoffset
+				i = 0
+				while i < firstcount:
+					etree.SubElement(tag, "first").text = RT.getstr(data[pos:]);pos += 24
+					i += 1
+								
+			if secondcount > 0:
+				entrypos = pos
+				secondoffsets = []
+				i = 0
+				while i < secondcount:
+					secondoffsets.append(RT.uint32(data, pos));pos += 4
+					i+=1
+				for j in secondoffsets:
+					pos = entrypos + j
+					etree.SubElement(tag, "second").text = RT.getstr(data[pos:])
+					
+		except:
+			etree.SubElement(tag, "dump").text = data[StartPos+8:StartPos+cnt1length].encode("hex")
+	
 		fullpos = StartPos + cnt1length # debug skip section		
 		self.checkheader(data, fullpos)		
 			

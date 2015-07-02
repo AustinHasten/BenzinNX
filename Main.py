@@ -23,20 +23,20 @@ def main():
 		bflanread = bflanRead.ReadBflan()
 		bflanread.start(data, 0, name, output)
 	else:
-		# try:
-		tree = etree.parse(sys.argv[1])
-		data = tree.getroot()
-		if data.tag == "xmflyt":
-			bflytwrite = bflytWrite.WriteBflyt()
-			bflytwrite.start(data, name, output)
-		elif data.tag == "xmflan":
-			bflanwrite = bflanWrite.WriteBflan()
-			bflanwrite.start(data, name, output)
-		# except:
-			# e = sys.exc_info()[0]
-			# print( "<p>Error: %s</p>" % e )
-			# print("Unknown File Format!")
-			# sys.exit(1)
+		try:
+			tree = etree.parse(sys.argv[1])
+			data = tree.getroot()
+			if data.tag == "xmflyt":
+				bflytwrite = bflytWrite.WriteBflyt()
+				bflytwrite.start(data, name, output)
+			elif data.tag == "xmflan":
+				bflanwrite = bflanWrite.WriteBflan()
+				bflanwrite.start(data, name, output)
+		except:
+			e = sys.exc_info()[0]
+			print( "<p>Error: %s</p>" % e )
+			print("Unknown File Format!")
+			sys.exit(1)
 
 if __name__ == "__main__":
 	main()
