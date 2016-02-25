@@ -560,7 +560,7 @@ class WriteBflyt(object):
 		temp2 = temp.find("y")
 		height = float(temp2.text)
 						
-		TempSec = struct.pack(">4B32s10f",flag, origin, alpha, unk, name, XTrans, YTrans, ZTrans, XRotate, YRotate, ZRotate, XScale, YScale, width, height)
+		TempSec = struct.pack(">4B32s10f",flag, origin, alpha, partscale, name, XTrans, YTrans, ZTrans, XRotate, YRotate, ZRotate, XScale, YScale, width, height)
 		
 		return TempSec
 		
