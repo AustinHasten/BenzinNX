@@ -226,6 +226,7 @@ class ReadBflyt(object):
 				etree.SubElement(srt, "XScale").text = str(XScale)
 				etree.SubElement(srt, "YScale").text = str(YScale)
 				loop += 1
+			
 		
 			if flags == 512:		# 0
 				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
@@ -290,6 +291,12 @@ class ReadBflyt(object):
 			elif flags == 65727:	# 3
 				etree.SubElement(entries, "dump").text = data[pos:pos+72].encode("hex")
 				pos += 72
+			elif flags == 16490:
+				etree.SubElement(entries, "dump").text = data[pos:pos+32].encode("hex")
+				pos += 32
+			elif flags == 262165:
+				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
+				pos += 8
 			
 		
 			
@@ -324,7 +331,9 @@ class ReadBflyt(object):
 			i += 1
 		#-------------------------------------------------------------------------------------------------
 		
-		fullpos = StartPos + mat1length # debug skip section		
+		fullpos = StartPos + mat1length # debug skip section
+		# print "fullpos = %d" %fullpos
+		# print "real pos = %d" %pos
 		
 		self.checkheader(data, fullpos)	
 		
@@ -332,7 +341,7 @@ class ReadBflyt(object):
 		flags = RT.uint8(data, pos);pos += 1
 		origin = RT.uint8(data, pos);pos += 1
 		alpha = RT.uint8(data, pos);pos += 1
-		unk = RT.uint8(data, pos);pos += 1
+		partscale = RT.uint8(data, pos);pos += 1
 		name = RT.getstr(data[pos:]);pos += 32
 		XTrans = RT.float4(data, pos);pos += 4
 		YTrans = RT.float4(data, pos);pos += 4
@@ -343,16 +352,22 @@ class ReadBflyt(object):
 		XScale = RT.float4(data, pos);pos += 4
 		YScale = RT.float4(data, pos);pos += 4
 		width = RT.float4(data, pos);pos += 4
-		height = RT.float4(data, pos);pos += 4
+		height = RT.float4(data, pos);pos += 4		
+		mainorigin = origin%16
+		parentorigin = origin/16
+		
 		tag.attrib['name'] = name	
 		etree.SubElement(tag, "visible").text = str(flags & 1)
 		etree.SubElement(tag, "TransmitAlpha2Children").text = str((flags & 2) >>1)
 		etree.SubElement(tag, "PositionAdjustment").text = str((flags & 4) >>2)
 		originTree = etree.SubElement(tag, "origin")
-		originTree.attrib['x'] = str(origin%3)	
-		originTree.attrib['y'] = str(origin/3)	
+		originTree.attrib['x'] = types.originX[mainorigin%4]
+		originTree.attrib['y'] = types.originY[mainorigin/4]
+		originTree = etree.SubElement(tag, "OriginOfParent")
+		originTree.attrib['x'] = types.originX[parentorigin%4]
+		originTree.attrib['y'] = types.originY[parentorigin/4]
 		etree.SubElement(tag, "alpha").text = str(alpha)
-		etree.SubElement(tag, "unk").text = str(unk)
+		etree.SubElement(tag, "PartScaling").text = str(partscale)
 		translateTree = etree.SubElement(tag, "translate")
 		etree.SubElement(translateTree, "x").text = "%.18f" %XTrans
 		etree.SubElement(translateTree, "y").text = "%.18f" %YTrans
@@ -713,7 +728,12 @@ class ReadBflyt(object):
 		while i < numsubs:
 			etree.SubElement(subs, "sub").text = RT.getstr(data[pos:]);pos += 24
 			i += 1
-		
+			
+		checkpos = StartPos + grp1length
+		if checkpos != pos:
+			toread = checkpos - pos
+			etree.SubElement(tag, "dump").text = data[pos:checkpos].encode("hex")
+			pos += toread
 		
 		self.checkheader(data, pos)	
 		

@@ -23,7 +23,7 @@ class Writer(object):
 			return number
 		except ValueError:
 			try:
-				return list.index(data.upper())
+				return list.index(data)
 			except:
 				print "%s is a unknown entry"%data
 				sys.exit(1)
