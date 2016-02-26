@@ -2,6 +2,7 @@ import sys, struct
 from lxml import etree
 from ReadTypes import Reader 
 RT = Reader()
+import types
 
 class ReadBflan(object):
 
@@ -156,9 +157,11 @@ class ReadBflan(object):
 					pad1 = RT.uint16(data, pos);pos += 2
 					OffsetToTagData = RT.uint32(data, pos);pos += 4
 					
+					typename = self.GetTypeName(tagtype, type2)
+					
 					entry = etree.SubElement(typetree, "entry")
 					entry.attrib['type1'] = str(type1)
-					entry.attrib['type2'] = str(type2)
+					entry.attrib['type2'] = typename
 					
 					if data_type == 512:
 						self.triplet(data, pos, entry, coord_count)
@@ -168,9 +171,29 @@ class ReadBflan(object):
 
 		
 	
+	def GetTypeName(self, tagtype, type2):
+		try:
+			if tagtype == "FLPA":
+				typename = types.FLPAtype2[type2]
+			elif tagtype == "FLVI":
+				typename = types.FLVItype2[type2]
+			elif tagtype == "FLVC":
+				typename = types.FLVCtype2[type2]
+			elif tagtype == "FLMC":
+				typename = types.FLMCtype2[type2]
+			elif tagtype == "FLTS":
+				typename = types.FLTStype2[type2]
+			elif tagtype == "FLTP":
+				typename = types.FLTPtype2[type2]
+			elif tagtype == "FLIM":
+				typename = types.FLIMtype2[type2]
 				
-				
-	
+			return typename
+		except:
+			return str(type2)
+		
+		
+		
 	def triplet(self, data, pos, tag, count):
 		i = 0
 		while i < count:

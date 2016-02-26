@@ -2,6 +2,7 @@ import struct, sys
 from WriteTypes import Writer 
 import binascii
 WT = Writer()
+import types
 
 
 class WriteBflan(object):
@@ -42,6 +43,8 @@ class WriteBflan(object):
 		End = int(data[2].text)
 		ChildBinding = int(data[3].text)
 		First = data[4].text
+		if First == None:
+			First = ""
 		FirstOffset = 28
 		SecondsOffset = WT.by4(len(First)) + FirstOffset
 		data2 = list(data[5])
@@ -122,7 +125,7 @@ class WriteBflan(object):
 		return paneSec
 	
 	def TagSection(self, tag):
-		tagtype = tag.get("type")
+		tagtype = tag.get("type").upper()
 		entry_count = tag.findall("entry")
 		taginfo = struct.pack('>4s4B' , tagtype, len(entry_count), 0, 0, 0)
 		
@@ -143,7 +146,23 @@ class WriteBflan(object):
 	
 	def entrySection(self, entry, tagtype):
 		type1 = entry.get("type1")
-		type2 = entry.get("type2")
+		
+		if tagtype == "FLPA":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLPAtype2)
+		elif tagtype == "FLVI":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLVItype2)
+		elif tagtype == "FLVC":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLVCtype2)
+		elif tagtype == "FLMC":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLMCtype2)
+		elif tagtype == "FLTS":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLTStype2)
+		elif tagtype == "FLTP":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLTPtype2)
+		elif tagtype == "FLIM":
+			type2 = WT.RepresentsInt(entry.get("type2"), types.FLIMtype2)
+		
+		# type2 = entry.get("type2")
 		if len(entry.findall("triplet")) != 0:
 			data_type = 512
 			coord_count = entry.findall("triplet")
