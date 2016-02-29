@@ -188,18 +188,24 @@ class ReadBflyt(object):
 			flags = RT.uint32(data, pos);pos += 4
 			#print flags
 			etree.SubElement(entries, "flags").text = str(flags)
+						
+			fullpos = StartPos + mat1length # debug skip section
 			
 			texref = RT.BitExtract(flags, 2, 30)
 			TextureSRT = RT.BitExtract(flags, 2, 28)
-			CoordGen = RT.BitExtract(flags, 2, 26)
-			chanctrl = RT.BitExtract(flags, 1, 6)
-			# matcol = RT.BitExtract(flags, 1, 4)
-			# swapmodetable = RT.BitExtract(flags, 1, 19)
-			# indtex_srt = RT.BitExtract(flags, 2, 17)
-			# indtex_order = RT.BitExtract(flags, 3, 14)
-			# TevStages = RT.BitExtract(flags, 5, 9)
-			# alpha_compare = RT.BitExtract(flags, 1, 8)
-			# blend_mode = RT.BitExtract(flags, 1, 7)
+			MappingSettings = RT.BitExtract(flags, 2, 26)
+			TextureCombiners = RT.BitExtract(flags, 2, 24)
+			ProjectionMapping = RT.BitExtract(flags, 2, 15)
+			Indirect = RT.BitExtract(flags, 1, 17)
+			AlphaTest = RT.BitExtract(flags, 1, 22)
+			Blend_mode = RT.BitExtract(flags, 2, 20)
+			BlendAlpha = RT.BitExtract(flags, 2, 18)
+			
+			# test = 30
+			# while test != 0:
+				# test1 = RT.BitExtract(flags, 2, test)
+				# print str(test) + " has " + str(test1)
+				# test -= 1
 			
 			loop = 0
 			while loop < texref: # 4
@@ -227,115 +233,121 @@ class ReadBflyt(object):
 				etree.SubElement(srt, "YScale").text = str(YScale)
 				loop += 1
 			
-		
-			if flags == 512:		# 0
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
-			elif flags == 5120:	# 0
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
-			elif flags == 131072:	# 0
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
-			elif flags == 21:		# 1
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
-			elif flags == 533:		# 1
-				etree.SubElement(entries, "dump").text = data[pos:pos+16].encode("hex")
-				pos += 16
-			elif flags == 1045:		# 1
-				etree.SubElement(entries, "dump").text = data[pos:pos+12].encode("hex")
-				pos += 12
-			elif flags == 5141:		# 1
-				etree.SubElement(entries, "dump").text = data[pos:pos+16].encode("hex")
-				pos += 16
-			elif flags == 32789:	# 1
-				etree.SubElement(entries, "dump").text = data[pos:pos+28].encode("hex")
-				pos += 28
-			elif flags == 106:		# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+20].encode("hex")
-				pos += 20
-			elif flags == 618:		# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+28].encode("hex")
-				pos += 28
-			elif flags == 1130:		# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+24].encode("hex")
-				pos += 24
-			elif flags == 5738:		# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+36].encode("hex")
-				pos += 36
-			elif flags == 32874:	# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
-				pos += 40
-			elif flags == 33386:	# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+48].encode("hex")
-				pos += 48
-			elif flags == 49258:	# 2
-				etree.SubElement(entries, "dump").text = data[pos:pos+52].encode("hex")
-				pos += 52
-			elif flags == 703:		# 3
-				etree.SubElement(entries, "dump").text = data[pos:pos+40].encode("hex")
-				pos += 40
-			elif flags == 1215:		# 3
-				etree.SubElement(entries, "dump").text = data[pos:pos+36].encode("hex")
-				pos += 36
-			elif flags == 5823:		# 3
-				etree.SubElement(entries, "dump").text = data[pos:pos+48].encode("hex")
-				pos += 48
-			elif flags == 32959:	# 3
-				etree.SubElement(entries, "dump").text = data[pos:pos+52].encode("hex")
-				pos += 52
-			elif flags == 49343:	# 3
-				etree.SubElement(entries, "dump").text = data[pos:pos+64].encode("hex")
-				pos += 64
-			elif flags == 65727:	# 3
-				etree.SubElement(entries, "dump").text = data[pos:pos+72].encode("hex")
-				pos += 72
-			elif flags == 16490:
-				etree.SubElement(entries, "dump").text = data[pos:pos+32].encode("hex")
-				pos += 32
-			elif flags == 262165:
-				etree.SubElement(entries, "dump").text = data[pos:pos+8].encode("hex")
-				pos += 8
+			loop = 0
+			while loop < MappingSettings: # 16
+				unk = RT.uint8(data, pos);pos += 1
+				MappingMethod = RT.uint8(data, pos);pos += 1
+				unk2 = RT.uint8(data, pos);pos += 1
+				unk3 = RT.uint8(data, pos);pos += 1
+				unk4 = RT.uint8(data, pos);pos += 1
+				unk5 = RT.uint8(data, pos);pos += 1
+				unk6 = RT.uint8(data, pos);pos += 1
+				unk7 = RT.uint8(data, pos);pos += 1
+				mapping = etree.SubElement(entries, "mapping")
+				etree.SubElement(mapping, "unk").text = str(unk)
+				etree.SubElement(mapping, "MappingMethod").text = types.MappingTypes[MappingMethod]
+				etree.SubElement(mapping, "unk2").text = str(unk2)
+				etree.SubElement(mapping, "unk3").text = str(unk3)
+				etree.SubElement(mapping, "unk4").text = str(unk4)
+				etree.SubElement(mapping, "unk5").text = str(unk5)
+				etree.SubElement(mapping, "unk6").text = str(unk6)
+				etree.SubElement(mapping, "unk7").text = str(unk7)
+				loop += 1
+				
+				
+			loop = 0
+			while loop < TextureCombiners: # 4
+				ColorBlend = RT.uint8(data, pos);pos += 1
+				AlphaBlend = RT.uint8(data, pos);pos += 1
+				unk3 = RT.uint8(data, pos);pos += 1
+				unk4 = RT.uint8(data, pos);pos += 1
+				TexComb = etree.SubElement(entries, "TextureCombiners")
+				etree.SubElement(TexComb, "ColorBlend").text = types.ColorBlendTypes[ColorBlend]
+				etree.SubElement(TexComb, "AlphaBlending").text = types.BlendTypes[AlphaBlend]
+				etree.SubElement(TexComb, "unk3").text = str(unk3)
+				etree.SubElement(TexComb, "unk4").text = str(unk4)
+				loop += 1
+				
+				
+			loop = 0
+			while loop < AlphaTest: # 
+				Condition = RT.uint8(data, pos);pos += 1
+				unk1 = RT.uint8(data, pos);pos += 1
+				unk2 = RT.uint8(data, pos);pos += 1
+				unk3 = RT.uint8(data, pos);pos += 1
+				Value = RT.float4(data, pos);pos += 4
+				ATest = etree.SubElement(entries, "AlphaTest")
+				etree.SubElement(ATest, "Condition").text = types.AlphaTestCondition[Condition]
+				etree.SubElement(ATest, "unk1").text = str(unk1)
+				etree.SubElement(ATest, "unk2").text = str(unk2)
+				etree.SubElement(ATest, "unk3").text = str(unk3)
+				etree.SubElement(ATest, "Value").text = str(Value)			
+				loop += 1
 			
-		
+			loop = 0
+			while loop < Blend_mode: # 
+				BlendOp = RT.uint8(data, pos);pos += 1
+				Src = RT.uint8(data, pos);pos += 1
+				Dst = RT.uint8(data, pos);pos += 1
+				LogicalOp = RT.uint8(data, pos);pos += 1
+				BMode = etree.SubElement(entries, "BlendMode")
+				etree.SubElement(BMode, "BlendOp").text = types.BlendCalcOp[BlendOp]
+				etree.SubElement(BMode, "Src").text = types.BlendCalc[Src]
+				etree.SubElement(BMode, "Dst").text = types.BlendCalc[Dst]
+				etree.SubElement(BMode, "LogicalOp").text = types.LogicalCalcOp[LogicalOp]
+				loop += 1
 			
-			# flags = 131072
-			# texref = RT.BitExtract(flags, 2, 30)
-			# TextureSRT = RT.BitExtract(flags, 2, 28)
-			# CoordGen = RT.BitExtract(flags, 2, 26)
-			# chanctrl = RT.BitExtract(flags, 1, 6)
-			# matcol = RT.BitExtract(flags, 1, 4)
-			# swapmodetable = RT.BitExtract(flags, 1, 19)
-			# indtex_srt = RT.BitExtract(flags, 2, 17)
-			# indtex_order = RT.BitExtract(flags, 3, 14)
-			# TevStages = RT.BitExtract(flags, 5, 9)
-			# alpha_compare = RT.BitExtract(flags, 1, 8)
-			# blend_mode = RT.BitExtract(flags, 1, 7)
+			loop = 0
+			while loop < BlendAlpha: # 
+				BlendOp = RT.uint8(data, pos);pos += 1
+				Src = RT.uint8(data, pos);pos += 1
+				Dst = RT.uint8(data, pos);pos += 1
+				unk4 = RT.uint8(data, pos);pos += 1
+				BModeA = etree.SubElement(entries, "BlendModeAlpha")
+				etree.SubElement(BModeA, "BlendOp").text = types.BlendCalcOp[BlendOp]
+				etree.SubElement(BModeA, "Src").text = types.BlendCalc[Src]
+				etree.SubElement(BModeA, "Dst").text = types.BlendCalc[Dst]
+				etree.SubElement(BModeA, "unk4").text = str(unk4)			
+				loop += 1
 			
-			
-			# print "%s has flag %d and %d of texref"%(MatName, flags, texref)
-			# print "%s has flag %d and %d of TextureSRT"%(MatName, flags, TextureSRT)
-			# print "%s has flag %d and %d of CoordGen"%(MatName, flags, CoordGen)
-			# print "%s has flag %d and %d of chanctrl"%(MatName, flags, chanctrl)
-			# print "%s has flag %d and %d of matcol"%(MatName, flags, matcol)
-			# print "%s has flag %d and %d of swapmodetable"%(MatName, flags, swapmodetable)
-			# print "%s has flag %d and %d of indtex_srt"%(MatName, flags, indtex_srt)
-			# print "%s has flag %d and %d of indtex_order"%(MatName, flags, indtex_order)
-			# print "%s has flag %d and %d of TevStages"%(MatName, flags, TevStages)
-			# print "%s has flag %d and %d of alpha_compare"%(MatName, flags, alpha_compare)
-			# print "%s has flag %d and %d of blend_mode"%(MatName, flags, blend_mode)
-			
-			
-		
+			loop = 0
+			while loop < Indirect: # 24
+				Rotate = RT.float4(data, pos);pos += 4
+				Xwarp = RT.float4(data, pos);pos += 4
+				Ywarp = RT.float4(data, pos);pos += 4
+				IndAdj = etree.SubElement(entries, "IndirectAdjust")
+				etree.SubElement(IndAdj, "Rotate").text = str(Rotate)
+				etree.SubElement(IndAdj, "Xwarp").text = str(Xwarp)
+				etree.SubElement(IndAdj, "Ywarp").text = str(Ywarp)				
+				loop += 1
+				
+			loop = 0
+			while loop < ProjectionMapping: # 40
+				XTrans = RT.float4(data, pos);pos += 4
+				YTrans = RT.float4(data, pos);pos += 4
+				XScale = RT.float4(data, pos);pos += 4
+				YScale = RT.float4(data, pos);pos += 4
+				option = RT.uint8(data, pos);pos += 1
+				unk1 = RT.uint8(data, pos);pos += 1
+				unk2 = RT.uint16(data, pos);pos += 2
+				ProjectMap = etree.SubElement(entries, "ProjectionMapping")
+				etree.SubElement(ProjectMap, "XTrans").text = str(XTrans)
+				etree.SubElement(ProjectMap, "YTrans").text = str(YTrans)
+				etree.SubElement(ProjectMap, "XScale").text = str(XScale)
+				etree.SubElement(ProjectMap, "YScale").text = str(YScale)
+				etree.SubElement(ProjectMap, "Option").text = types.ProjectionMappingTypes[option]
+				etree.SubElement(ProjectMap, "unk1").text = str(unk1)
+				etree.SubElement(ProjectMap, "unk2").text = str(unk2)
+				loop += 1
+				
 			i += 1
 		#-------------------------------------------------------------------------------------------------
 		
-		fullpos = StartPos + mat1length # debug skip section
+		# fullpos = StartPos + mat1length # debug skip section
 		# print "fullpos = %d" %fullpos
 		# print "real pos = %d" %pos
 		
-		self.checkheader(data, fullpos)	
+		self.checkheader(data, pos)	
 		
 	def panesection(self, data, pos, tag): 
 		flags = RT.uint8(data, pos);pos += 1

@@ -1,10 +1,26 @@
 
-wraps = ["GX2_WRAP", "GX2_MIRROR", "GX2_CLAMP", "GX2_MIRROR_ONCE", "GX2_CLAMP_HALF_BORDER",
-		"GX2_MIRROR_ONCE_HALF_BORDER", "GX2_CLAMP_BORDER", "GX2_MIRROR_ONCE_BORDER" ]
+wraps = ["NEAR_CLAMP", "NEAR_REPEAT", "NEAR_MIRROR", "GX2_MIRROR_ONCE", "CLAMP",
+		"REPEAT", "MIRROR", "GX2_MIRROR_ONCE_BORDER" ]
 
 originX = ["Center", "Left", "Right"]
 
 originY = ["Center", "Up", "Down"]
+
+MappingTypes = ["UVMapping", "", "", "OrthogonalProjection", "PaneBasedProjection"]
+
+BlendTypes = ["Max", "Min"]
+
+ColorBlendTypes = ["Overwrite", "Multiplicative", "Additive", "Exclusion", "4", "Subtractive", "ColorDodge", "ColorBurn", "Overlay", "Indirect", "BlendIndirect", "EachIndirect"]
+
+AlphaTestCondition = ["Never", "Less", "LessEqual", "Equal", "NotEqual", "GreaterEqual", "Greater", "Always"]
+
+BlendCalc = ["0", "1", "FBColor", "1-FBColor", "PixelAlpha", "1-PixelAlpha", "FBAlpha", "1-FBAlpha", "PixelColor", "1-PixelColor"]
+
+BlendCalcOp = ["0", "Add", "Subtract", "ReverseSubtract", "Min", "Max"]
+
+LogicalCalcOp = ["None", "NoOp", "Clear", "Set", "Copy", "InvCopy", "Inv", "And", "Nand", "Or", "Nor", "Xor", "Equiv", "RevAnd", "InvAnd", "RevOr", "InvOr"]
+
+ProjectionMappingTypes = ["Standard", "EntireLayout", "", "", "PaneRandSProjection"]
 
 #anim types
 FLPAtype2 = ["Xtrans", "Ytrans", "Ztrans", "Xrotate", "Yrotate", "Zrotate", "Xscale", "Yscale", "Xsize", "Ysize"]

@@ -28,3 +28,13 @@ class Writer(object):
 				print "%s is a unknown entry"%data
 				sys.exit(1)
 			
+	def BitInsert(self, value, newValue, count, start):
+		mask = 0
+		i = start
+		while i < start+count:
+			mask |= (0x80000000 >> i)
+			i +=1
+			
+		value &= not(mask)
+		value |= (newValue << (32 - (start + count))) & mask
+		return value

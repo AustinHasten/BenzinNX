@@ -195,9 +195,82 @@ class WriteBflyt(object):
 						XScale = float(loop.find("XScale").text)
 						YScale = float(loop.find("YScale").text)
 						TempSec += struct.pack(">5f", XTrans, YTrans, Rotate, XScale, YScale)
-										
-				if int(flags) != 0:
-					TempSec += binascii.unhexlify(i.find("dump").text)
+						
+						
+				mapping = i.findall("mapping")
+				if i.find("mapping") != None:
+					for loop in mapping:						
+						unk = int(loop.find("unk").text)
+						MappingMethod = WT.RepresentsInt(loop.find("MappingMethod").text, types.MappingTypes)
+						unk2 = int(loop.find("unk2").text)
+						unk3 = int(loop.find("unk3").text)
+						unk4 = int(loop.find("unk4").text)
+						unk5 = int(loop.find("unk5").text)
+						unk6 = int(loop.find("unk6").text)
+						unk7 = int(loop.find("unk7").text)
+						TempSec += struct.pack(">8B", unk, MappingMethod, unk2, unk3, unk4, unk5, unk6, unk7)
+						
+						
+				TextureCombiners = i.findall("TextureCombiners")
+				if i.find("TextureCombiners") != None:
+					for loop in TextureCombiners:
+						ColorBlend = WT.RepresentsInt(loop.find("ColorBlend").text, types.ColorBlendTypes)
+						AlphaBlending = WT.RepresentsInt(loop.find("AlphaBlending").text, types.BlendTypes)
+						unk3 = int(loop.find("unk3").text)
+						unk4 = int(loop.find("unk4").text)
+						TempSec += struct.pack(">4B", ColorBlend, AlphaBlending, unk3, unk4)
+						
+				AlphaTest = i.findall("AlphaTest")
+				if i.find("AlphaTest") != None:
+					for loop in AlphaTest:
+						Condition = WT.RepresentsInt(loop.find("Condition").text, types.AlphaTestCondition)
+						unk1 = int(loop.find("unk1").text)
+						unk2 = int(loop.find("unk2").text)
+						unk3 = int(loop.find("unk3").text)
+						Value = float(loop.find("Value").text)
+						TempSec += struct.pack(">4Bf", Condition, unk1, unk2, unk3, Value)
+						
+				BlendMode = i.findall("BlendMode")
+				if i.find("BlendMode") != None:
+					for loop in BlendMode:
+						BlendOp = WT.RepresentsInt(loop.find("BlendOp").text, types.BlendCalcOp)
+						Src = WT.RepresentsInt(loop.find("Src").text, types.BlendCalc)
+						Dst = WT.RepresentsInt(loop.find("Dst").text, types.BlendCalc)
+						LogicalOp = WT.RepresentsInt(loop.find("LogicalOp").text, types.LogicalCalcOp)
+						TempSec += struct.pack(">4B", BlendOp, Src, Dst, LogicalOp)
+						
+				BlendModeAlpha = i.findall("BlendModeAlpha")
+				if i.find("BlendModeAlpha") != None:
+					for loop in BlendModeAlpha:
+						BlendOp = WT.RepresentsInt(loop.find("BlendOp").text, types.BlendCalcOp)
+						Src = WT.RepresentsInt(loop.find("Src").text, types.BlendCalc)
+						Dst = WT.RepresentsInt(loop.find("Dst").text, types.BlendCalc)
+						unk4 = int(loop.find("unk4").text)
+						TempSec += struct.pack(">4B", BlendOp, Src, Dst, unk4)
+						
+				Indirect = i.findall("Indirect")
+				if i.find("Indirect") != None:
+					for loop in Indirect:
+						Rotate = float(loop.find("Rotate").text)
+						Xwarp = float(loop.find("Xwarp").text)
+						Ywarp = float(loop.find("Ywarp").text)
+						TempSec += struct.pack(">3f", Rotate, Xwarp, Ywarp)
+						
+				ProjectionMapping = i.findall("ProjectionMapping")
+				if i.find("ProjectionMapping") != None:
+					for loop in ProjectionMapping:
+						XTrans = float(loop.find("XTrans").text)
+						YTrans = float(loop.find("YTrans").text)
+						XScale = float(loop.find("XScale").text)
+						YScale = float(loop.find("YScale").text)
+						Option = WT.RepresentsInt(loop.find("Option").text, types.ProjectionMappingTypes)
+						unk1 = int(loop.find("unk1").text)
+						unk2 = int(loop.find("unk2").text)
+						TempSec += struct.pack(">4f2BH", XTrans, YTrans, XScale, YScale, Option, unk1, unk2)
+						
+						
+				# if int(flags) != 0:
+					# TempSec += binascii.unhexlify(i.find("dump").text)
 					
 				if len(MatOffset) < len(temp):
 					MatOffset.append(MatOffset[-1] + len(TempSec))
