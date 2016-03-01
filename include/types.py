@@ -22,6 +22,8 @@ LogicalCalcOp = ["None", "NoOp", "Clear", "Set", "Copy", "InvCopy", "Inv", "And"
 
 ProjectionMappingTypes = ["Standard", "EntireLayout", "", "", "PaneRandSProjection"]
 
+TextAlign = ["NA", "Left", "Center", "Right"]
+
 #anim types
 FLPAtype2 = ["Xtrans", "Ytrans", "Ztrans", "Xrotate", "Yrotate", "Zrotate", "Xscale", "Yscale", "Xsize", "Ysize"]
 

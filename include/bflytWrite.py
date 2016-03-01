@@ -10,6 +10,7 @@ class WriteBflyt(object):
 	def start(self, data, name, output):
 		self.FileSections = 0
 		self.texturefiles = []
+		self.fontfiles = []
 		self.OutFile = ""
 		self.version = data.find("version")
 		
@@ -23,7 +24,7 @@ class WriteBflyt(object):
 				self.OutFile += self.writetxl1(i)
 				self.FileSections += 1
 			elif i.get('type') == "fnl1":
-				self.OutFile += self.writetxl1(i)
+				self.OutFile += self.writefnl1(i)
 				self.FileSections += 1
 			elif i.get('type') == "mat1":
 				self.OutFile += self.writemat1(i)
@@ -130,9 +131,11 @@ class WriteBflyt(object):
 		Numfonts = len(data)
 		FilenameOffset = [4*len(data)]
 		names = struct.pack(">%ds"%WT.plusnull(len(data[0].text)),data[0].text)
+		self.fontfiles.append(data[0].text)
 		
 		i = 1
 		while i < len(data):
+			self.fontfiles.append(data[i].text)
 			FilenameOffset.append(len(names) + FilenameOffset[0])
 			temp = struct.pack(">%ds"%WT.plusnull(len(data[i].text)),data[i].text)
 			names += temp
@@ -144,7 +147,7 @@ class WriteBflyt(object):
 		TempSec = struct.pack('>%sI' % len(FilenameOffset), *FilenameOffset)
 		
 		TempSec += names
-		fnl1sec = struct.pack(">4sI2h",sec.get('type'),int(len(TempSec))+12,NumTextures,0)
+		fnl1sec = struct.pack(">4sI2h",sec.get('type'),int(len(TempSec))+12,Numfonts,0)
 		fnl1sec += TempSec
 		return fnl1sec
 		
@@ -267,6 +270,23 @@ class WriteBflyt(object):
 						unk1 = int(loop.find("unk1").text)
 						unk2 = int(loop.find("unk2").text)
 						TempSec += struct.pack(">4f2BH", XTrans, YTrans, XScale, YScale, Option, unk1, unk2)
+						
+						
+				ShadowBlending = i.findall("ShadowBlending")
+				if i.find("ShadowBlending") != None:
+					for loop in ShadowBlending:
+						temp2 = loop.find("BlackBlending")
+						BlackcolR = temp2.get("R")
+						BlackcolG = temp2.get("G")
+						BlackcolB = temp2.get("B")
+						temp2 = loop.find("WhiteBlending")
+						WhitecolR = temp2.get("R")
+						WhitecolG = temp2.get("G")
+						WhitecolB = temp2.get("B")
+						WhitecolA = temp2.get("A")
+						pad = loop.find("padding").text
+						TempSec += struct.pack(">8B",int(BlackcolR),int(BlackcolG),int(BlackcolB),
+											int(WhitecolR),int(WhitecolG),int(WhitecolB),int(WhitecolA),int(pad))
 						
 						
 				# if int(flags) != 0:
@@ -465,14 +485,15 @@ class WriteBflyt(object):
 			len2 = int(sec.find("length").text)
 			mat_num = self.MatErr(sec.find("material").get("name"))
 			font = sec.find("font")
-			font_idx = int(font.get("index"))
+			font_idx = self.fontfiles.index(font.get("Name"))
 			temp = font.find("alignment")
-			alignmentL = int(temp.get("x"))
-			alignmentH = int(temp.get("y")) * 3
+			alignmentL = WT.RepresentsInt(temp.get("x"), types.originX)
+			alignmentH = WT.RepresentsInt(temp.get("y"), types.originY) * 4
 			alignment = alignmentL + alignmentH
-			LineAlignment = int(font.find("LineAlignment").text)
-			unk = int(font.find("unk").text)
-			name_offs = int(font.find("name_offs").text)
+			LineAlignment = WT.RepresentsInt(font.find("LineAlignment").text, types.TextAlign)
+			ActiveShadows = int(font.find("ActiveShadows").text)
+			unk1 = int(font.find("unk1").text)
+			ItalicTilt = float(font.find("ItalicTilt").text)
 			# StartOfTextOffset = int(font.find("OffsetStartOfText").text)		
 			xsize = float(font.find("xsize").text)
 			ysize = float(font.find("ysize").text)
@@ -491,33 +512,37 @@ class WriteBflyt(object):
 			color2 |= int(colors.get("B")) << 8
 			color2 |= int(colors.get("A")) 
 			
-			newstuff = sec.find("newstuff")
-			unkfloat = float(newstuff.find("unkfloat").text)
-			unkfloat1 = float(newstuff.find("unkfloat1").text)
-			unkfloat2 = float(newstuff.find("unkfloat2").text)
-			unkfloat3 = float(newstuff.find("unkfloat3").text)
-			colors = newstuff.find("unkcolor1")
-			unkcolor1 = int(colors.get("R")) << 24
-			unkcolor1 |= int(colors.get("G")) << 16
-			unkcolor1 |= int(colors.get("B")) << 8
-			unkcolor1 |= int(colors.get("A")) 
-			colors = newstuff.find("unkcolor2")
-			unkcolor2 = int(colors.get("R")) << 24
-			unkcolor2 |= int(colors.get("G")) << 16
-			unkcolor2 |= int(colors.get("B")) << 8
-			unkcolor2 |= int(colors.get("A")) 		
-			unk2 = int(newstuff.find("unk2").text)
+			Shadows = sec.find("Shadows")
+			OffsetX = float(Shadows.find("OffsetX").text)
+			OffsetY = float(Shadows.find("OffsetY").text)
+			ScaleX = float(Shadows.find("ScaleX").text)
+			ScaleY = float(Shadows.find("ScaleY").text)
+			colors = Shadows.find("ShadowTopColor")
+			ShadowTopColor = int(colors.get("R")) << 24
+			ShadowTopColor |= int(colors.get("G")) << 16
+			ShadowTopColor |= int(colors.get("B")) << 8
+			ShadowTopColor |= int(colors.get("A")) 
+			colors = Shadows.find("ShadowBottomColor")
+			ShadowBottomColor = int(colors.get("R")) << 24
+			ShadowBottomColor |= int(colors.get("G")) << 16
+			ShadowBottomColor |= int(colors.get("B")) << 8
+			ShadowBottomColor |= int(colors.get("A"))
+			ShadowItalic = float(Shadows.find("ItalicTilt").text)
+			unk3 = int(Shadows.find("unk3").text)
 			
 			text = binascii.unhexlify(sec.find("text").text)		
 			while len(text) % 4 != 0:
 				text += "\x00"
 			callname = sec.find("callname").text
 					
-			TempSec += struct.pack(">4H2BH4I4f2I3f3I",len1, len2, mat_num, font_idx, alignment, LineAlignment, unk, name_offs , 160, color1, color2,
-									xsize, ysize, charsize, linesize, 160 + len(text), unkfloat, unkfloat1, unkfloat2, unkfloat3, unkcolor1, unkcolor2, unk2)
+			TempSec += struct.pack(">4H4Bf3I4fI3f3IfI",len1, len2, mat_num, font_idx, alignment, LineAlignment, ActiveShadows, unk1, ItalicTilt , 160, color1, color2,
+									xsize, ysize, charsize, linesize, 160 + len(text), OffsetX, OffsetY, ScaleX, ScaleY, ShadowTopColor, ShadowBottomColor, ShadowItalic, unk3)
 									
 			TempSec += text
-			TempSec += struct.pack(">%ds"%WT.by4(len(callname)), callname)
+			if callname == None:
+				pass				
+			else:
+				TempSec += struct.pack(">%ds"%WT.by4(len(callname)), callname)
 			
 			txt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 			txt1sec += TempSec

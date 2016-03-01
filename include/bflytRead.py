@@ -116,8 +116,10 @@ class ReadBflyt(object):
 		startoffontlist = pos
 		tag = etree.SubElement(self.newroot, "tag", type="fnl1")
 		entries = etree.SubElement(tag, "entries")
+		self.fontnames = []
 		for i in xrange(len(FilenameOffset)):
 			Filenames = RT.getstr(data[pos:]);pos += int(len(Filenames)+1)	# read the names
+			self.fontnames.append(Filenames)
 			etree.SubElement(entries, "name").text = Filenames
 		
 		endoffontlist = pos
@@ -164,7 +166,7 @@ class ReadBflyt(object):
 			MaterialOffset.append(RT.uint32(data, pos));pos += 4
 		self.MaterialNames = []
 		i = 0
-		while i < NumMaterials:
+		while i < NumMaterials:			
 			MatName = RT.getstr(data[pos:]);pos += 28
 			self.MaterialNames.append(MatName)
 			entries = etree.SubElement(tag, "entries", name=MatName)
@@ -200,6 +202,7 @@ class ReadBflyt(object):
 			AlphaTest = RT.BitExtract(flags, 1, 22)
 			Blend_mode = RT.BitExtract(flags, 2, 20)
 			BlendAlpha = RT.BitExtract(flags, 2, 18)
+			ShadowBlending = RT.BitExtract(flags, 2, 13)
 			
 			# test = 30
 			# while test != 0:
@@ -311,6 +314,7 @@ class ReadBflyt(object):
 				loop += 1
 			
 			loop = 0
+			
 			while loop < Indirect: # 24
 				Rotate = RT.float4(data, pos);pos += 4
 				Xwarp = RT.float4(data, pos);pos += 4
@@ -338,16 +342,51 @@ class ReadBflyt(object):
 				etree.SubElement(ProjectMap, "Option").text = types.ProjectionMappingTypes[option]
 				etree.SubElement(ProjectMap, "unk1").text = str(unk1)
 				etree.SubElement(ProjectMap, "unk2").text = str(unk2)
+				loop += 1				
+			
+			loop = 0
+			while loop < ShadowBlending: # 16
+				ShadBlend = etree.SubElement(entries, "ShadowBlending")
+				BlackBlending = []
+				while len(BlackBlending) < 3:
+					BlackBlending.append(RT.uint8(data, pos));pos += 1
+				Blackblend = etree.SubElement(ShadBlend, "BlackBlending")
+				Blackblend.attrib['R'] = str(BlackBlending[0])
+				Blackblend.attrib['G'] = str(BlackBlending[1])
+				Blackblend.attrib['B'] = str(BlackBlending[2])
+				WhiteBlending = []
+				while len(WhiteBlending) < 4:
+					WhiteBlending.append(RT.uint8(data, pos));pos += 1
+				WhiteBlend = etree.SubElement(ShadBlend, "WhiteBlending")
+				WhiteBlend.attrib['R'] = str(WhiteBlending[0])
+				WhiteBlend.attrib['G'] = str(WhiteBlending[1])
+				WhiteBlend.attrib['B'] = str(WhiteBlending[2])
+				WhiteBlend.attrib['A'] = str(WhiteBlending[3])
+				pad = RT.uint8(data, pos);pos += 1
+				etree.SubElement(ShadBlend, "padding").text = str(pad)
+				
 				loop += 1
+				
+				
+			try:
+				if pos < MaterialOffset[i+1] + StartPos:
+					etree.SubElement(entries, "dump").text = data[pos:MaterialOffset[i+1] + StartPos].encode("hex")
+					pos = MaterialOffset[i+1] + StartPos
+					print "Dumped extra mat1 info"
+			except:
+				pass
 				
 			i += 1
 		#-------------------------------------------------------------------------------------------------
 		
+		if pos < fullpos:
+			etree.SubElement(entries, "dump").text = data[pos:fullpos].encode("hex")
+			print "Dumped extra mat1 info"
 		# fullpos = StartPos + mat1length # debug skip section
 		# print "fullpos = %d" %fullpos
 		# print "real pos = %d" %pos
 		
-		self.checkheader(data, pos)	
+		self.checkheader(data, fullpos)	
 		
 	def panesection(self, data, pos, tag): 
 		flags = RT.uint8(data, pos);pos += 1
@@ -492,8 +531,9 @@ class ReadBflyt(object):
 		font_idx = RT.uint16(data, pos);pos += 2
 		alignment = RT.uint8(data, pos);pos += 1
 		LineAlignment = RT.uint8(data, pos);pos += 1
-		unk = RT.uint16(data, pos);pos += 2
-		name_offs = RT.uint32(data, pos);pos += 4
+		ActiveShadows = RT.uint8(data, pos);pos += 1
+		unk1 = RT.uint8(data, pos);pos += 1
+		ItalicTilt = RT.float4(data, pos);pos += 4
 		StartOfTextOffset = RT.uint32(data, pos);pos += 4
 		color1 = RT.uint32(data, pos);pos += 4
 		color2 = RT.uint32(data, pos);pos += 4
@@ -502,26 +542,28 @@ class ReadBflyt(object):
 		char_space = RT.float4(data, pos);pos += 4
 		line_space = RT.float4(data, pos);pos += 4
 		callnameoffset = RT.uint32(data, pos);pos += 4
-		unkfloat = RT.float4(data, pos);pos += 4
-		unkfloat1 = RT.float4(data, pos);pos += 4
-		unkfloat2 = RT.float4(data, pos);pos += 4
-		unkfloat3 = RT.float4(data, pos);pos += 4
-		unkcolor1 = RT.uint32(data, pos);pos += 4
-		unkcolor2 = RT.uint32(data, pos);pos += 4
-		unk2 = RT.uint32(data, pos);pos += 4
+		OffsetX = RT.float4(data, pos);pos += 4
+		OffsetY = RT.float4(data, pos);pos += 4
+		ScaleX = RT.float4(data, pos);pos += 4
+		ScaleY = RT.float4(data, pos);pos += 4
+		ShadowTopColorValue = RT.uint32(data, pos);pos += 4
+		ShadowBottomColorValue = RT.uint32(data, pos);pos += 4
+		ShadowItalic = RT.float4(data, pos);pos += 4
+		unk3 = RT.uint32(data, pos);pos += 4
 		
 		
 		
 		etree.SubElement(tag, "length").text = str(len2)
 		etree.SubElement(tag, "restrictlength").text = str(len1)
 		etree.SubElement(tag, "material", name = self.MaterialNames[mat_num])
-		font = etree.SubElement(tag, "font", index=str(font_idx))
+		font = etree.SubElement(tag, "font", Name=self.fontnames[font_idx])
 		originTree = etree.SubElement(font, "alignment")
-		originTree.attrib['x'] = str(alignment%3)	
-		originTree.attrib['y'] = str(alignment/3)	
-		etree.SubElement(font, "LineAlignment").text = str(LineAlignment)
-		etree.SubElement(font, "unk").text = str(unk)
-		etree.SubElement(font, "name_offs").text = str(name_offs)
+		originTree.attrib['x'] = types.originX[alignment%4]
+		originTree.attrib['y'] = types.originY[alignment/4]
+		etree.SubElement(font, "LineAlignment").text = types.TextAlign[LineAlignment]
+		etree.SubElement(font, "ActiveShadows").text = str(ActiveShadows)
+		etree.SubElement(font, "unk1").text = str(unk1)
+		etree.SubElement(font, "ItalicTilt").text = str(ItalicTilt)
 		# etree.SubElement(font, "OffsetStartOfText").text = str(StartOfTextOffset)
 		topcolor = etree.SubElement(tag, "topcolor")
 		topcolor.attrib['R'] = str(color1 >> 24)
@@ -538,28 +580,31 @@ class ReadBflyt(object):
 		etree.SubElement(font, "charsize").text = str(char_space)
 		etree.SubElement(font, "linesize").text = str(line_space)
 		# etree.SubElement(font, "callnameoffset").text = str(callnameoffset)
-		new = etree.SubElement(tag, "newstuff")
-		etree.SubElement(new, "unkfloat").text = "%.18f" %unkfloat
-		etree.SubElement(new, "unkfloat1").text = "%.18f" %unkfloat1
-		etree.SubElement(new, "unkfloat2").text = "%.18f" %unkfloat2
-		etree.SubElement(new, "unkfloat3").text = "%.18f" %unkfloat3
-		unkcolor1tree = etree.SubElement(new, "unkcolor1")
-		unkcolor1tree.attrib['R'] = str(unkcolor1 >> 24)
-		unkcolor1tree.attrib['G'] = str(unkcolor1 >> 16 & 0xff)
-		unkcolor1tree.attrib['B'] = str(unkcolor1 >> 8 & 0xff)
-		unkcolor1tree.attrib['A'] = str(unkcolor1 >> 0 & 0xff)
-		unkcolor2tree = etree.SubElement(new, "unkcolor2")
-		unkcolor2tree.attrib['R'] = str(unkcolor2 >> 24)
-		unkcolor2tree.attrib['G'] = str(unkcolor2 >> 16 & 0xff)
-		unkcolor2tree.attrib['B'] = str(unkcolor2 >> 8 & 0xff)
-		unkcolor2tree.attrib['A'] = str(unkcolor2 >> 0 & 0xff)
-		etree.SubElement(new, "unk2").text = str(unk2)
+		new = etree.SubElement(tag, "Shadows")
+		etree.SubElement(new, "OffsetX").text = "%.18f" %OffsetX
+		etree.SubElement(new, "OffsetY").text = "%.18f" %OffsetY
+		etree.SubElement(new, "ScaleX").text = "%.18f" %ScaleX
+		etree.SubElement(new, "ScaleY").text = "%.18f" %ScaleY
+		ShadowTopColor = etree.SubElement(new, "ShadowTopColor")
+		ShadowTopColor.attrib['R'] = str(ShadowTopColorValue >> 24)
+		ShadowTopColor.attrib['G'] = str(ShadowTopColorValue >> 16 & 0xff)
+		ShadowTopColor.attrib['B'] = str(ShadowTopColorValue >> 8 & 0xff)
+		ShadowTopColor.attrib['A'] = str(ShadowTopColorValue >> 0 & 0xff)
+		ShadowBottomColor = etree.SubElement(new, "ShadowBottomColor")
+		ShadowBottomColor.attrib['R'] = str(ShadowBottomColorValue >> 24)
+		ShadowBottomColor.attrib['G'] = str(ShadowBottomColorValue >> 16 & 0xff)
+		ShadowBottomColor.attrib['B'] = str(ShadowBottomColorValue >> 8 & 0xff)
+		ShadowBottomColor.attrib['A'] = str(ShadowBottomColorValue >> 0 & 0xff)
+		etree.SubElement(new, "ItalicTilt").text = str(ShadowItalic)
+		etree.SubElement(new, "unk3").text = str(unk3)
 		etree.SubElement(tag, "text").text = data[pos:pos + len2].encode("hex");pos += RT.by4(len2)
-		callname = RT.getstr(data[pos:]);pos += RT.by4(int(len(callname)) +1)
+		
+		if pos < StartPos + txt1length:
+			callname = RT.getstr(data[pos:]);pos += RT.by4(int(len(callname)) +1)
+		else:
+			callname = ""
+		
 		etree.SubElement(tag, "callname").text = callname
-		
-		
-		
 		
 		fullpos = StartPos + txt1length # debug skip section		
 		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
