@@ -2,23 +2,20 @@ import os, sys, struct
 from lxml import etree
 from include import *
 
+
 def main():
-	if len(sys.argv) < 2:
-		print("Usage: BenzinU input [output]")
-		sys.exit(1)
+
 		
+	UseMatNames, output = options()
 	name, ext = os.path.splitext(sys.argv[1])
-	try:
-		output = sys.argv[2]
-	except:
-		output = None
+	
 	f = open(sys.argv[1], "rb")
 	data = f.read()
 	f.close
 	header = data[0:4]
 	if header == "FLYT":
 		bflytread = bflytRead.ReadBflyt()
-		bflytread.start(data, 0, name, output)
+		bflytread.start(data, 0, name, output, UseMatNames)
 	elif header == "FLAN":
 		bflanread = bflanRead.ReadBflan()
 		bflanread.start(data, 0, name, output)
@@ -37,6 +34,51 @@ def main():
 			print( "<p>Error: %s</p>" % e )
 			print("Unknown File Format!")
 			sys.exit(1)
+			
+			
+def options():
+	usage = """if converting bflyt/bflan to xmflyt/xmflan:
+Usage: BenzinU input [option] [output]
+	options:
+		-m 		use Material numbers instead of names
+	output:
+		output file name is optional 
+		
+if converting xmflyt/xmflan to bflyt/bflan:
+Usage: BenzinU input [output]
+	output:
+		output file name is optional """
+	if len(sys.argv) < 2:
+		print usage
+		sys.exit(1)
+	if len(sys.argv) >= 3:	
+		if sys.argv[2] == "-m":
+			UseMatNames = False
+			try:
+				output = sys.argv[3]
+			except:
+				output = None				
+		elif sys.argv[2].startswith("-"):
+			print "Unknown option given"
+			print usage
+			sys.exit(1)
+		else:
+			UseMatNames = True
+			output = sys.argv[2]
+			
+	elif len(sys.argv) == 2:
+		try:
+			output = sys.argv[2]
+		except:
+			output = None
+		UseMatNames = True	
+	else:
+		print usage
+		sys.exit(1)
+		
+	return UseMatNames, output
 
 if __name__ == "__main__":
 	main()
+
+	

@@ -88,10 +88,10 @@ class WriteBflyt(object):
 			pad = 0
 			width = float(sec.find("width").text)
 			height = float(sec.find("height").text)
-			unk1 = float(sec.find("unk1").text)
-			unk2 = float(sec.find("unk2").text)
+			MaxPartsWidth = float(sec.find("MaxPartsWidth").text)
+			MaxPartsHeight = float(sec.find("MaxPartsHeight").text)
 			filename = sec.find("filename").text
-			TempSec = struct.pack(">4b4f%ds"%WT.by4(len(filename)),drawnFromMiddle,pad,pad,pad,width,height,unk1,unk2,filename)
+			TempSec = struct.pack(">4b4f%ds"%WT.by4(len(filename)),drawnFromMiddle,pad,pad,pad,width,height,MaxPartsWidth,MaxPartsHeight,filename)
 			lyt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 			lyt1sec += TempSec
 			return lyt1sec
@@ -369,9 +369,17 @@ class WriteBflyt(object):
 		try:
 			TempSec = self.writepaneinfo(sec)
 			wnd = sec.find("wnd")
-			coordinate = wnd.findall("coordinate")		
+			stretchLeft = int(wnd.find("stretchLeft").text)
+			stretchRight = int(wnd.find("stretchRight").text)
+			stretchUp = int(wnd.find("stretchUp").text)
+			stretchDown = int(wnd.find("stretchDown").text)
+			customLeft = int(wnd.find("customLeft").text)
+			customRight = int(wnd.find("customRight").text)
+			customUp = int(wnd.find("customUp").text)
+			customDown = int(wnd.find("customDown").text)
+			
 			FrameCount = int(wnd.find("FrameCount").text)
-			unk1 = int(wnd.find("unk1").text)
+			unk1 = int(wnd.find("flags").text)
 			# offset1 = int(wnd.find("offset1").text)
 			# offset2 = int(wnd.find("offset2").text)
 			wnd1 = sec.find("wnd1")
@@ -395,7 +403,7 @@ class WriteBflyt(object):
 			wnd4mat = sec.find("wnd4mat")		
 			wnd4matmat = wnd4mat.findall("material")
 			indexlist = wnd4mat.findall("index")
-			part1 = struct.pack('>4f4B2I16BH2B', float(coordinate[0].text), float(coordinate[1].text), float(coordinate[2].text), float(coordinate[3].text),
+			part1 = struct.pack('>8H4B2I16BH2B', stretchLeft, stretchRight, stretchUp, stretchDown, customLeft, customRight, customUp, customDown,
 								FrameCount, unk1, 0, 0, 112, offset2,
 								int(color[0].get("R")), int(color[0].get("G")), int(color[0].get("B")), int(color[0].get("A")),
 								int(color[1].get("R")), int(color[1].get("G")), int(color[1].get("B")), int(color[1].get("A")),
@@ -431,18 +439,18 @@ class WriteBflyt(object):
 			TempSec = self.writepaneinfo(sec)
 			section = sec.find("section")
 			name = section.get("name")
-			unkfloat = section.find("unkfloat")
-			unkfloat1 = float(unkfloat.get("x"))
-			unkfloat2 = float(unkfloat.get("y"))
+			Scale = section.find("Scale")
+			ScaleX = float(Scale.get("x"))
+			ScaleY = float(Scale.get("y"))
 			entry = section.findall("entry")
-			TempSec += struct.pack(">I2f", len(entry), unkfloat1, unkfloat2)
+			TempSec += struct.pack(">I2f", len(entry), ScaleX, ScaleY)
 			entrySec = ""
 			TempSec2 = ""
 			
 			for i in entry:
 				entryname = i.get("entryname")
 				unk1 = int(i.find("unk1").text)
-				unk2 = int(i.find("unk2").text)
+				unk2 = int(i.find("flag").text)
 				entryoffset = 0
 				extraoffset = 0
 				tag = i.find("tag")
@@ -664,7 +672,7 @@ class WriteBflyt(object):
 		
 	def MatErr(self, data):
 		try:
-			mat = self.MatList.index(data)
+			mat = WT.RepresentsInt(data, self.MatList)
 			return mat
 		except ValueError:
 			print "No data in mat1 for %s" %(data)

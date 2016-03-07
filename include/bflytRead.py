@@ -6,10 +6,10 @@ import types
 
 class ReadBflyt(object):
 
-	def start(self, data, pos, name, output):
+	def start(self, data, pos, name, output, UseMatNames):
 		# self.setup()
 		self.root = etree.Element("xmflyt")
-		self.checkheader(data, pos)
+		self.checkheader(data, pos, UseMatNames)
 		
 		RT.indent(self.root)
 		if output == None:
@@ -19,42 +19,44 @@ class ReadBflyt(object):
 			with open(output, "w") as dirpath:
 				dirpath.write(etree.tostring(self.root))
 	
-	def checkheader(self, data, pos):
+	def checkheader(self, data, pos, UseMatNames):
 		magic = data[pos:pos + 4]
 		if magic == "FLYT":
-			self.bflytHeader(data, pos)
+			self.bflytHeader(data, pos, UseMatNames)
 		elif magic == "lyt1":
-			self.lyt1section(data, pos)
+			self.lyt1section(data, pos, UseMatNames)
 		elif magic == "txl1":
-			self.txl1section(data, pos)
+			self.txl1section(data, pos, UseMatNames)
 		elif magic == "fnl1":
-			self.fnl1section(data, pos)
+			self.fnl1section(data, pos, UseMatNames)
 		elif magic == "mat1":
-			self.mat1section(data, pos)
+			self.mat1section(data, pos, UseMatNames)
 		elif magic == "pan1":
-			self.pan1section(data, pos)
+			self.pan1section(data, pos, UseMatNames)
 		elif magic == "pas1":
-			self.pas1section(data, pos)
+			self.pas1section(data, pos, UseMatNames)
 		elif magic == "pic1":
-			self.pic1section(data, pos, None)
+			self.pic1section(data, pos, None, UseMatNames)
 		elif magic == "txt1":
-			self.txt1section(data, pos, None)
+			self.txt1section(data, pos, None, UseMatNames)
 		elif magic == "wnd1":
-			self.wnd1section(data, pos, None)
+			self.wnd1section(data, pos, None, UseMatNames)
 		elif magic == "bnd1":
-			self.bnd1section(data, pos, None)
+			self.bnd1section(data, pos, None, UseMatNames)
 		elif magic == "prt1":
-			self.prt1section(data, pos, None)
+			self.prt1section(data, pos, None, UseMatNames)
 		elif magic == "pae1":
-			self.pae1section(data, pos)
+			self.pae1section(data, pos, UseMatNames)
 		elif magic == "grp1":
-			self.grp1section(data, pos)
+			self.grp1section(data, pos, UseMatNames)
 		elif magic == "grs1":
-			self.grs1section(data, pos)
+			self.grs1section(data, pos, UseMatNames)
 		elif magic == "gre1":
-			self.gre1section(data, pos)
+			self.gre1section(data, pos, UseMatNames)
 		elif magic == "cnt1":
-			self.cnt1section(data, pos)
+			self.cnt1section(data, pos, UseMatNames)
+		elif magic == "usd1":
+			self.usd1section(data, pos, UseMatNames)
 		elif len(data) == pos:
 			print "Done"			
 		else:
@@ -66,7 +68,7 @@ class ReadBflyt(object):
 		seclength = RT.uint32(data, pos);pos += 4
 		return magic,seclength,pos
 		
-	def bflytHeader(self, data, pos):
+	def bflytHeader(self, data, pos, UseMatNames):
 		bflytmagic = data[0:4]; pos += 4
 		endian = RT.uint16(data, pos);pos += 2
 		if endian == 65279: #0xFEFF - Big Endian
@@ -84,27 +86,27 @@ class ReadBflyt(object):
 		if len(data) != filesize:
 			print "BFLYT filesize doesn't match"
 			sys.exit(1)
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 		
-	def lyt1section(self, data, pos):
+	def lyt1section(self, data, pos, UseMatNames):
 		lyt1magic, lyt1length, pos = self.ReadMagic(data,pos)			# read magic & section length
 		drawnFromMiddle = RT.uint8(data, pos);pos += 1					# drawn from middle of the screen
 		pad = RT.uint24(data, pos);pos += 3								# padding 0x000000
 		width = RT.float4(data, pos);pos += 4							# screen width
 		height = RT.float4(data, pos);pos += 4							# screen height
-		unk1 = RT.float4(data, pos);pos += 4							# unknown value
-		unk2 = RT.float4(data, pos);pos += 4							# unknown seems to be the same as unk1
+		MaxPartsWidth = RT.float4(data, pos);pos += 4							# unknown value
+		MaxPartsHeight = RT.float4(data, pos);pos += 4							# unknown seems to be the same as unk1
 		filename = RT.getstr(data[pos:]);pos += RT.by4(int(len(filename)) + 1)	# looks to be the filename
 		tag = etree.SubElement(self.newroot, "tag", type="lyt1")
 		etree.SubElement(tag, "drawnFromMiddle").text = str(drawnFromMiddle)
 		etree.SubElement(tag, "width").text = str(width)
 		etree.SubElement(tag, "height").text = str(height)
-		etree.SubElement(tag, "unk1").text = str(unk1)
-		etree.SubElement(tag, "unk2").text = str(unk2)
+		etree.SubElement(tag, "MaxPartsWidth").text = str(MaxPartsWidth)
+		etree.SubElement(tag, "MaxPartsHeight").text = str(MaxPartsHeight)
 		etree.SubElement(tag, "filename").text = str(filename)
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 				
-	def fnl1section(self, data, pos):
+	def fnl1section(self, data, pos, UseMatNames):
 		fnl1magic, fnl1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		NumFonts = RT.uint16(data, pos);pos += 2							# number of textures in section
 		OffsetToNextSection = RT.uint16(data, pos);pos += 2					# Should be 0
@@ -126,9 +128,9 @@ class ReadBflyt(object):
 		padd = endoffontlist - startoffontlist
 		pad = RT.by4(padd) - padd
 		pos += pad
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 	
-	def txl1section(self, data, pos):
+	def txl1section(self, data, pos, UseMatNames):
 		txl1magic, txl1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		NumTextures = RT.uint16(data, pos);pos += 2							# number of textures in section
 		OffsetToNextSection = RT.uint16(data, pos);pos += 2					# Should be 0
@@ -150,9 +152,9 @@ class ReadBflyt(object):
 		padd = endoftexlist - startoftexlist
 		pad = RT.by4(padd) - padd
 		pos += pad
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 			
-	def mat1section(self, data, pos):
+	def mat1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		mat1magic, mat1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
@@ -386,7 +388,7 @@ class ReadBflyt(object):
 		# print "fullpos = %d" %fullpos
 		# print "real pos = %d" %pos
 		
-		self.checkheader(data, fullpos)	
+		self.checkheader(data, fullpos, UseMatNames)	
 		
 	def panesection(self, data, pos, tag): 
 		flags = RT.uint8(data, pos);pos += 1
@@ -435,25 +437,25 @@ class ReadBflyt(object):
 		etree.SubElement(sizeTree, "y").text = str(height)
 		return pos
 	
-	def pan1section(self, data, pos):
+	def pan1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		pan1magic, pan1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pan1")
 		pos = self.panesection(data, pos, tag)								# read pane info
 		
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 		
-	def pas1section(self, data, pos):
+	def pas1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		pas1magic, pas1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pas1")
 		
 		
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 		
-	def pic1section(self, data, pos, prt):
+	def pic1section(self, data, pos, prt, UseMatNames):
 		StartPos = pos
 		pic1magic, pic1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
@@ -470,7 +472,12 @@ class ReadBflyt(object):
 		mat_num = RT.uint16(data, pos);pos += 2
 		num_texcoords = RT.uint8(data, pos);pos += 1
 		pad = RT.uint8(data, pos);pos += 1
-		etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
+		
+		if UseMatNames == False:
+			etree.SubElement(tag, "material").text = str(mat_num)
+		else:
+			etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
+			
 		colors = etree.SubElement(tag, "colors")
 		vtxColTL = etree.SubElement(colors, "vtxColorTL")
 		vtxColTL.attrib['R'] = str(vtxColorTL >> 24)
@@ -511,11 +518,11 @@ class ReadBflyt(object):
 			i += 1
 		
 		if prt == None:
-			self.checkheader(data, pos)
+			self.checkheader(data, pos, UseMatNames)
 		else:
 			return
 				
-	def txt1section(self, data, pos, prt):
+	def txt1section(self, data, pos, prt, UseMatNames):
 		StartPos = pos
 		txt1magic, txt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
@@ -555,7 +562,12 @@ class ReadBflyt(object):
 		
 		etree.SubElement(tag, "length").text = str(len2)
 		etree.SubElement(tag, "restrictlength").text = str(len1)
-		etree.SubElement(tag, "material", name = self.MaterialNames[mat_num])
+		
+		if UseMatNames == False:
+			etree.SubElement(tag, "material").text = str(mat_num)
+		else:
+			etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
+			
 		font = etree.SubElement(tag, "font", Name=self.fontnames[font_idx])
 		originTree = etree.SubElement(font, "alignment")
 		originTree.attrib['x'] = types.originX[alignment%4]
@@ -609,11 +621,11 @@ class ReadBflyt(object):
 		fullpos = StartPos + txt1length # debug skip section		
 		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
 		if prt == None:
-			self.checkheader(data, fullpos)
+			self.checkheader(data, fullpos, UseMatNames)
 		else:
 			return
 		
-	def wnd1section(self, data, pos, prt):
+	def wnd1section(self, data, pos, prt, UseMatNames):
 		StartPos = pos
 		wnd1magic, wnd1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		fullpos = StartPos + wnd1length
@@ -624,12 +636,26 @@ class ReadBflyt(object):
 			tag = etree.SubElement(prt, "tag", type="wnd1")
 		pos = self.panesection(data, pos, tag)								# read pane info
 		wndd = etree.SubElement(tag, "wnd")
-		for i in xrange(4):
-			etree.SubElement(wndd, "coordinate").text = str(RT.float4(data, pos));pos += 4
-			
+		
+		stretchLeft = RT.uint16(data, pos);pos += 2
+		stretchRight = RT.uint16(data, pos);pos += 2
+		stretchUp = RT.uint16(data, pos);pos += 2
+		stretchDown = RT.uint16(data, pos);pos += 2
+		etree.SubElement(wndd, "stretchLeft").text = str(stretchLeft)
+		etree.SubElement(wndd, "stretchRight").text = str(stretchRight)
+		etree.SubElement(wndd, "stretchUp").text = str(stretchUp)
+		etree.SubElement(wndd, "stretchDown").text = str(stretchDown)
+		customLeft = RT.uint16(data, pos);pos += 2
+		customRight = RT.uint16(data, pos);pos += 2
+		customUp = RT.uint16(data, pos);pos += 2
+		customDown = RT.uint16(data, pos);pos += 2
+		etree.SubElement(wndd, "customLeft").text = str(customLeft)
+		etree.SubElement(wndd, "customRight").text = str(customRight)
+		etree.SubElement(wndd, "customUp").text = str(customUp)
+		etree.SubElement(wndd, "customDown").text = str(customDown)
 		FrameCount = RT.uint8(data, pos);pos += 1
 		etree.SubElement(wndd, "FrameCount").text = str(FrameCount)
-		etree.SubElement(wndd, "unk1").text = str(RT.uint8(data, pos));pos += 1
+		etree.SubElement(wndd, "flags").text = str(RT.uint8(data, pos));pos += 1
 		pad = RT.uint16(data, pos);pos += 2
 		offset1 = str(RT.uint32(data, pos));pos += 4
 		offset2 = str(RT.uint32(data, pos));pos += 4
@@ -641,7 +667,13 @@ class ReadBflyt(object):
 			color.attrib["B"] = str(RT.uint8(data, pos));pos += 1
 			color.attrib["A"] = str(RT.uint8(data, pos));pos += 1
 			
-		etree.SubElement(wnddd, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
+		mat_num = RT.uint16(data, pos);pos += 2
+		
+		if UseMatNames == False:
+			etree.SubElement(wnddd, "material").text = str(mat_num)
+		else:
+			etree.SubElement(wnddd, "material").text = self.MaterialNames[mat_num]
+			
 		coordinate_count = RT.uint8(data, pos);pos += 1
 		etree.SubElement(wnddd, "coordinate_count").text = str(coordinate_count)
 		pad1 = RT.uint8(data, pos);pos += 1
@@ -662,7 +694,13 @@ class ReadBflyt(object):
 			wnd4offset.append(str(RT.uint32(data, pos)));pos += 4
 		wndmat = etree.SubElement(tag, "wnd4mat")
 		for i in xrange(FrameCount):
-			etree.SubElement(wndmat, "material").text = self.MaterialNames[RT.uint16(data, pos)];pos += 2
+			mat_num = RT.uint16(data, pos);pos += 2
+		
+			if UseMatNames == False:
+				etree.SubElement(wndmat, "material").text = str(mat_num)
+			else:
+				etree.SubElement(wndmat, "material").text = self.MaterialNames[mat_num]			
+			
 			etree.SubElement(wndmat, "index").text = str(RT.uint8(data, pos));pos += 1
 			pad2 = RT.uint8(data, pos);pos += 1
 		
@@ -671,11 +709,11 @@ class ReadBflyt(object):
 			pos = fullpos
 		
 		if prt == None:
-			self.checkheader(data, pos)
+			self.checkheader(data, pos, UseMatNames)
 		else:
 			return
 		
-	def bnd1section(self, data, pos, prt):
+	def bnd1section(self, data, pos, prt, UseMatNames):
 		StartPos = pos
 		bnd1magic, bnd1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
@@ -683,7 +721,7 @@ class ReadBflyt(object):
 			tag = etree.SubElement(self.newroot, "tag", type="bnd1")
 		else:
 			tag = etree.SubElement(prt, "tag", type="bnd1")
-		pos = self.panesection(data, pos, tag)								# read pane info
+		pos = self.panesection(data, pos, tag, UseMatNames)								# read pane info
 		
 		pos = StartPos + bnd1length # debug skip section
 		
@@ -692,7 +730,7 @@ class ReadBflyt(object):
 		else:
 			return
 		
-	def prt1section(self, data, pos, prt):
+	def prt1section(self, data, pos, prt, UseMatNames):
 		StartPos = pos
 		prt1magic, prt1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
@@ -703,11 +741,11 @@ class ReadBflyt(object):
 		pos = self.panesection(data, pos, tag)								# read pane info
 		section = etree.SubElement(tag, "section")
 		count = RT.uint32(data, pos);pos += 4
-		unkfloat1 = RT.float4(data, pos);pos += 4
-		unkfloat2 = RT.float4(data, pos);pos += 4
-		unkfloat = etree.SubElement(section, "unkfloat")
-		unkfloat.attrib['x'] = str(unkfloat1)
-		unkfloat.attrib['y'] = str(unkfloat2)
+		ScaleX = RT.float4(data, pos);pos += 4
+		ScaleY = RT.float4(data, pos);pos += 4
+		Scale = etree.SubElement(section, "Scale")
+		Scale.attrib['x'] = str(ScaleX)
+		Scale.attrib['y'] = str(ScaleY)
 		sectionsizes = 0
 		extradatacount = 0
 		i = 0
@@ -723,7 +761,7 @@ class ReadBflyt(object):
 			entry = etree.SubElement(section, "entry")
 			entry.attrib['entryname'] = entryname
 			etree.SubElement(entry, "unk1").text = str(unk1)
-			etree.SubElement(entry, "unk2").text = str(unk2)
+			etree.SubElement(entry, "flag").text = str(unk2)
 			
 			 
 			if entryoffset > 0:
@@ -731,15 +769,15 @@ class ReadBflyt(object):
 				magic = data[temppos:temppos + 4]
 				sectionsizes += RT.uint32(data, temppos + 4)
 				if magic == "pic1":
-					self.pic1section(data, temppos, entry)
+					self.pic1section(data, temppos, entry, UseMatNames)
 				elif magic == "txt1":
-					self.txt1section(data, temppos, entry)
+					self.txt1section(data, temppos, entry, UseMatNames)
 				elif magic == "wnd1":
-					self.wnd1section(data, temppos, entry)
+					self.wnd1section(data, temppos, entry, UseMatNames)
 				elif magic == "bnd1":
-					self.bnd1section(data, temppos, entry)
+					self.bnd1section(data, temppos, entry, UseMatNames)
 				elif magic == "prt1":
-					self.prt1section(data, temppos, entry)
+					self.prt1section(data, temppos, entry, UseMatNames)
 				
 			if extraoffset > 0:
 				temppos = StartPos + extraoffset
@@ -755,21 +793,27 @@ class ReadBflyt(object):
 		
 		pos += sectionsizes
 		pos += 48 * extradatacount
+		
+		fullpos = StartPos + prt1length # debug skip section		
+		etree.SubElement(tag, "dump").text = data[pos:fullpos].encode("hex")
+		
+		pos = fullpos
+		
 		if prt == None:
-			self.checkheader(data, pos)
+			self.checkheader(data, pos, UseMatNames)
 		else:
 			return
 		
-	def pae1section(self, data, pos):
+	def pae1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		pae1magic, pae1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="pae1")
 		
 		pos = StartPos + pae1length # debug skip section
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 		
-	def grp1section(self, data, pos):
+	def grp1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		grp1magic, grp1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
@@ -777,6 +821,8 @@ class ReadBflyt(object):
 		GroupName = RT.getstr(data[pos:]);pos += 24
 		numsubs = RT.uint16(data, pos);pos += 2
 		unk = RT.uint16(data, pos);pos += 2
+		print numsubs
+		print unk
 		tag.attrib['name'] = GroupName
 		if numsubs > 0:
 			subs = etree.SubElement(tag, "subs")
@@ -792,27 +838,27 @@ class ReadBflyt(object):
 			etree.SubElement(tag, "dump").text = data[pos:checkpos].encode("hex")
 			pos += toread
 		
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 		
-	def grs1section(self, data, pos):
+	def grs1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		grs1magic, grs1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="grs1")
 		
 		pos = StartPos + grs1length # debug skip section
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 		
-	def gre1section(self, data, pos):
+	def gre1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		gre1magic, gre1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="gre1")
 		
 		pos = StartPos + gre1length # debug skip section
-		self.checkheader(data, pos)	
+		self.checkheader(data, pos, UseMatNames)	
 				
-	def cnt1section(self, data, pos):
+	def cnt1section(self, data, pos, UseMatNames):
 		StartPos = pos
 		cnt1magic, cnt1length, pos = self.ReadMagic(data,pos)				# read magic & section length		
 		tag = etree.SubElement(self.newroot, "tag", type="cnt1")
@@ -843,8 +889,17 @@ class ReadBflyt(object):
 		except:
 			etree.SubElement(tag, "dump").text = data[StartPos+8:StartPos+cnt1length].encode("hex")
 	
-		fullpos = StartPos + cnt1length # debug skip section		
-		self.checkheader(data, fullpos)		
+		fullpos = StartPos + cnt1length # debug skip section
+		self.checkheader(data, fullpos, UseMatNames)
+		
+		
+	def usd1section(self, data, pos, UseMatNames):
+		StartPos = pos
+		usd1magic, usd1length, pos = self.ReadMagic(data,pos)				# read magic & section length	
+		tag = etree.SubElement(self.newroot, "tag", type="usd1")
+		etree.SubElement(tag, "dump").text = data[StartPos+8:StartPos+usd1length].encode("hex")
+		fullpos = StartPos + usd1length # debug skip section
+		self.checkheader(data, fullpos, UseMatNames)
 			
 	def debugfile(self, data):
 		
