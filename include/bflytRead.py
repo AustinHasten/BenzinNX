@@ -567,7 +567,8 @@ class ReadBflyt(object):
 			etree.SubElement(tag, "material").text = str(mat_num)
 		else:
 			etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
-			
+		if font_idx == 65535:
+			font_idx = 0
 		font = etree.SubElement(tag, "font", Name=self.fontnames[font_idx])
 		originTree = etree.SubElement(font, "alignment")
 		originTree.attrib['x'] = types.originX[alignment%4]
@@ -818,11 +819,9 @@ class ReadBflyt(object):
 		grp1magic, grp1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="grp1")
-		GroupName = RT.getstr(data[pos:]);pos += 24
-		numsubs = RT.uint16(data, pos);pos += 2
-		unk = RT.uint16(data, pos);pos += 2
-		print numsubs
-		print unk
+		GroupName = RT.getstr(data[pos:]);pos += 35
+		numsubs = RT.uint8(data, pos);pos += 1
+		#unk = RT.uint16(data, pos);pos += 2
 		tag.attrib['name'] = GroupName
 		if numsubs > 0:
 			subs = etree.SubElement(tag, "subs")
@@ -864,27 +863,40 @@ class ReadBflyt(object):
 		tag = etree.SubElement(self.newroot, "tag", type="cnt1")
 		try:
 			firstoffset = RT.uint32(data, pos);pos += 4
-			firstcount = RT.uint16(data, pos);pos += 2
-			secondcount = RT.uint16(data, pos);pos += 2
-			name = RT.getstr(data[pos:])
-			tag.attrib['name'] = name		
-			if firstoffset > 0:
-				pos = StartPos + firstoffset
+			secondoffset = RT.uint32(data, pos);pos += 4
+			partcount = RT.uint16(data, pos);pos += 2
+			animcount = RT.uint16(data, pos);pos += 2
+			thirdoffset = RT.uint32(data, pos);pos += 4
+			forthoffset = RT.uint32(data, pos);pos += 4
+			name = RT.getstr(data[pos:]);pos += RT.by4(len(name) + 1);pos += RT.by4(len(name) + 1)
+			PartType = etree.SubElement(tag, "PartType")
+			PartType.attrib['name'] = name
+			if partcount > 0:
+				pos = StartPos + secondoffset
 				i = 0
-				while i < firstcount:
-					etree.SubElement(tag, "first").text = RT.getstr(data[pos:]);pos += 24
+				while i < partcount:
+					etree.SubElement(PartType, "parts").text = RT.getstr(data[pos:]);pos += 24
 					i += 1
-								
-			if secondcount > 0:
+			
+			if animcount > 0:
+				animPartCount = RT.uint32(data, pos);pos += 4
+				AnimName = RT.getstr(data[pos:]);pos += RT.by4(len(AnimName) + 1)
 				entrypos = pos
+				animpart = etree.SubElement(tag, "AnimPart")
+				animpart.attrib['name'] = AnimName
 				secondoffsets = []
-				i = 0
-				while i < secondcount:
+				i = 1
+				while i < animPartCount:
 					secondoffsets.append(RT.uint32(data, pos));pos += 4
 					i+=1
+				print secondoffsets
 				for j in secondoffsets:
 					pos = entrypos + j
-					etree.SubElement(tag, "second").text = RT.getstr(data[pos:])
+					animName = RT.getstr(data[pos:])
+					etree.SubElement(animpart, "Anims").text = animName
+				pos += RT.by4(len(animName) + 1)
+					
+			
 					
 		except:
 			etree.SubElement(tag, "dump").text = data[StartPos+8:StartPos+cnt1length].encode("hex")

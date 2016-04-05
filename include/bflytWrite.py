@@ -50,6 +50,9 @@ class WriteBflyt(object):
 			elif i.get('type') == "prt1":
 				self.OutFile += self.writeprt1(i)
 				self.FileSections += 1
+			elif i.get('type') == "usd1":
+				self.OutFile += self.writeusd1(i)
+				self.FileSections += 1
 			elif i.get('type') == "pae1":
 				self.OutFile += self.writepas1(i)
 				self.FileSections += 1
@@ -491,7 +494,7 @@ class WriteBflyt(object):
 			TempSec = self.writepaneinfo(sec)
 			len1 = int(sec.find("restrictlength").text)
 			len2 = int(sec.find("length").text)
-			mat_num = self.MatErr(sec.find("material").get("name"))
+			mat_num = self.MatErr(sec.find("material").text)
 			font = sec.find("font")
 			font_idx = self.fontfiles.index(font.get("Name"))
 			temp = font.find("alignment")
@@ -543,8 +546,8 @@ class WriteBflyt(object):
 				text += "\x00"
 			callname = sec.find("callname").text
 					
-			TempSec += struct.pack(">4H4Bf3I4fI3f3IfI",len1, len2, mat_num, font_idx, alignment, LineAlignment, ActiveShadows, unk1, ItalicTilt , 160, color1, color2,
-									xsize, ysize, charsize, linesize, 160 + len(text), OffsetX, OffsetY, ScaleX, ScaleY, ShadowTopColor, ShadowBottomColor, ShadowItalic, unk3)
+			TempSec += struct.pack(">4H4Bf3I4fI4f2IfI",len1, len2, mat_num, font_idx, alignment, LineAlignment, ActiveShadows, unk1, ItalicTilt , 164, color1, color2,
+									xsize, ysize, charsize, linesize, 0, OffsetX, OffsetY, ScaleX, ScaleY, ShadowTopColor, ShadowBottomColor, ShadowItalic, unk3)
 									
 			TempSec += text
 			if callname == None:
@@ -571,56 +574,74 @@ class WriteBflyt(object):
 				TempSec2 += struct.pack('>24s', i.text)				
 		else:		
 			num_subs = 0
-		TempSec = struct.pack(">24s2H",GroupName, num_subs, 0)
+		TempSec = struct.pack(">35sB",GroupName, num_subs)
 		TempSec += TempSec2
 		grp1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		grp1sec += TempSec
 		return grp1sec
 	
 	def writecnt1(self, sec):
-		name = sec.get("name")
-		NameLength = WT.by4(len(name))
+		PartType = sec.find("PartType")
+		Partname = PartType.get("name")
+		NameLength = WT.by4(len(Partname))
+		parts = PartType.findall("parts")
+		animParts = 0
+		
+		AnimPart = sec.find("AnimPart")
+		
 		if sec.find("dump") == None:
-			first = sec.findall("first")
-			second = sec.findall("second")
 			firstSec = ""
 			secondSec = ""
-			for i in first:
-				firstSec += struct.pack(">24s",i.text)
+			thirdSec = ""
+			AnimsOffset = []
+			for i in parts:
+				firstSec += struct.pack(">24s", i.text )
+				
 			
-			Offset = []
-			try:
-				secondSec = struct.pack(">%ds"%WT.plusnull(len(second[0].text)),second[0].text)
-				Offset.append(4*len(second))
-			except:
-				pass
-			i = 1
-			while i < len(second):
-				Offset.append(len(secondSec) + Offset[0])
-				if second[i].text != None:
-					temp = struct.pack(">%ds"%WT.plusnull(len(second[i].text)),second[i].text)
-				else:
-					temp = struct.pack(">1s","")
-				secondSec += temp
-				i += 1
+			if AnimPart != None:
+				animParts = 1
+				animfile = AnimPart.get("name")
+				Anims = AnimPart.findall("Anims")
+				AnimsOffset += [4*len(Anims)]			
+				secondSec += struct.pack(">I%ds" %WT.by4(len(animfile)), len(Anims) + 1, animfile )
 				
-			while len(secondSec) % 4 != 0:
-				secondSec += "\x00"
+				names = struct.pack(">%ds"%WT.plusnull(len(Anims[0].text)),Anims[0].text)
+				i = 1
+				while i < len(Anims):
+					
+					AnimsOffset.append(len(names) + AnimsOffset[0])
+					temp = struct.pack(">%ds"%WT.plusnull(len(Anims[i].text)),Anims[i].text)
+					names += temp
+					i += 1
+					
+				while len(names) % 4 != 0:
+					names += "\x00"
+					
+				for k in AnimsOffset:
+					thirdSec += struct.pack(">I", k)
 				
-			TempSec2 = struct.pack('>%sI' % len(Offset), *Offset)
-			TempSec2 += secondSec
-			TempSec = struct.pack(">I2H%ds" %NameLength, NameLength + 16, len(first), len(second), name)
+				thirdSec += names
+			
+			else:
+				Anims = 0
+				
+			thirdOffset = len(firstSec) + 28 + (NameLength * 2) + len(secondSec)
+			TempSec = struct.pack(">2I2H2I%ds%ds" %(NameLength, NameLength), 28 + NameLength, 28 + (NameLength * 2), len(parts), animParts, thirdOffset, thirdOffset + len(thirdSec),Partname,Partname )
 			TempSec += firstSec
-			TempSec += TempSec2
+			TempSec += secondSec
+			TempSec += thirdSec
+			TempSec += secondSec
 			
 		else:
 			TempSec = binascii.unhexlify(sec.find("dump").text)
 		
 		cnt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		cnt1sec += TempSec
+		
+		
 		return cnt1sec
 		
-	def writepaneinfo(self, sec):
+	def writepaneinfo(self, sec):#84
 		
 		name = sec.get("name")
 		temp = sec.find("visible")
@@ -669,6 +690,13 @@ class WriteBflyt(object):
 		TempSec = struct.pack(">4B32s10f",flag, origin, alpha, partscale, name, XTrans, YTrans, ZTrans, XRotate, YRotate, ZRotate, XScale, YScale, width, height)
 		
 		return TempSec
+		
+		
+	def writeusd1(self, sec):
+		TempSec = binascii.unhexlify(sec.find("dump").text)
+		usd1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
+		usd1sec += TempSec
+		return usd1sec
 		
 	def MatErr(self, data):
 		try:

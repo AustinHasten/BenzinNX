@@ -29,10 +29,13 @@ def main():
 			elif data.tag == "xmflan":
 				bflanwrite = bflanWrite.WriteBflan()
 				bflanwrite.start(data, name, output)
+			else:
+				print("Unknown File Format!")
+				sys.exit(1)
 		except:
 			e = sys.exc_info()[0]
 			print( "<p>Error: %s</p>" % e )
-			print("Unknown File Format!")
+			print("Something went wrong!")
 			sys.exit(1)
 			
 			
@@ -52,7 +55,7 @@ Usage: BenzinU input [output]
 		print usage
 		sys.exit(1)
 	if len(sys.argv) >= 3:	
-		if sys.argv[2] == "-m":
+		if sys.argv[2].lower() == "-m":
 			UseMatNames = False
 			try:
 				output = sys.argv[3]
