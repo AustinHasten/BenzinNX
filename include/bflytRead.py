@@ -6,6 +6,8 @@ import types
 
 class ReadBflyt(object):
 
+	bflytVersion = 0
+
 	def start(self, data, pos, name, output, UseMatNames):
 		# self.setup()
 		self.root = etree.Element("xmflyt")
@@ -83,6 +85,7 @@ class ReadBflyt(object):
 		sections = RT.uint16(data, pos);pos += 2	# Number of sections
 		pad2 = RT.uint16(data, pos);pos += 2 		# Padding
 		self.newroot = etree.SubElement(self.root, "version", Number=str(version))
+		self.bflytVersion = version
 		if len(data) != filesize:
 			print "BFLYT filesize doesn't match"
 			sys.exit(1)
@@ -722,12 +725,12 @@ class ReadBflyt(object):
 			tag = etree.SubElement(self.newroot, "tag", type="bnd1")
 		else:
 			tag = etree.SubElement(prt, "tag", type="bnd1")
-		pos = self.panesection(data, pos, tag, UseMatNames)								# read pane info
+		pos = self.panesection(data, pos, tag)								# read pane info
 		
 		pos = StartPos + bnd1length # debug skip section
 		
 		if prt == None:
-			self.checkheader(data, pos)
+			self.checkheader(data, pos, UseMatNames)
 		else:
 			return
 		
@@ -819,9 +822,14 @@ class ReadBflyt(object):
 		grp1magic, grp1length, pos = self.ReadMagic(data,pos)				# read magic & section length
 		
 		tag = etree.SubElement(self.newroot, "tag", type="grp1")
-		GroupName = RT.getstr(data[pos:]);pos += 35
-		numsubs = RT.uint8(data, pos);pos += 1
-		#unk = RT.uint16(data, pos);pos += 2
+		if self.bflytVersion < 1282:
+			GroupName = RT.getstr(data[pos:]);pos += 24
+			numsubs = RT.uint16(data, pos);pos += 2
+			unk = RT.uint16(data, pos);pos += 2
+		else:
+			GroupName = RT.getstr(data[pos:]);pos += 34
+			numsubs = RT.uint16(data, pos);pos += 2
+			#unk = RT.uint16(data, pos);pos += 2
 		tag.attrib['name'] = GroupName
 		if numsubs > 0:
 			subs = etree.SubElement(tag, "subs")
@@ -889,7 +897,6 @@ class ReadBflyt(object):
 				while i < animPartCount:
 					secondoffsets.append(RT.uint32(data, pos));pos += 4
 					i+=1
-				print secondoffsets
 				for j in secondoffsets:
 					pos = entrypos + j
 					animName = RT.getstr(data[pos:])

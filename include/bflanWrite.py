@@ -27,6 +27,7 @@ class WriteBflan(object):
 			else:
 				with open(output, "wb") as dirpath:
 					dirpath.write(self.OutFile)
+			print "Done"
 		except:
 			print "Destination file is in use"
 		#self.debugfile(self.OutFile)

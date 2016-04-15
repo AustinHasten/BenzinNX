@@ -3,9 +3,10 @@ from lxml import etree
 from urllib2 import urlopen
 from include import *
 
-version = "1.0"
+version = "1.0.0"
 
 def main():
+	print "BenzinU %s by Diddy81" % version
 
 	checkupdate()
 	UseMatNames, output = options()

@@ -4,8 +4,9 @@ import binascii
 WT = Writer()
 import types
 
-
 class WriteBflyt(object):
+
+	bflytVersion = 0
 
 	def start(self, data, name, output):
 		self.FileSections = 0
@@ -13,6 +14,7 @@ class WriteBflyt(object):
 		self.fontfiles = []
 		self.OutFile = ""
 		self.version = data.find("version")
+		self.bflytVersion = int(self.version.get("Number"))
 		
 		tags = self.version.findall("tag")		
 		for i in tags:
@@ -77,13 +79,13 @@ class WriteBflyt(object):
 			else:
 				with open(output, "wb") as dirpath:
 					dirpath.write(self.OutFile)
+			print "Done"
 		except:
 			print "Destination file is in use"
 		
 		
 	def header(self):
-						
-		return struct.pack(">4s4HI2H","FLYT",65279,20,int(self.version.get("Number")),0,int(len(self.OutFile)) + 20,self.FileSections,0)
+		return struct.pack(">4s4HI2H","FLYT",65279,20,self.bflytVersion,0,int(len(self.OutFile)) + 20,self.FileSections,0)
 			
 	def writelyt1(self, sec):
 		try:
@@ -574,7 +576,12 @@ class WriteBflyt(object):
 				TempSec2 += struct.pack('>24s', i.text)				
 		else:		
 			num_subs = 0
-		TempSec = struct.pack(">35sB",GroupName, num_subs)
+			
+		if self.bflytVersion < 1282:
+			TempSec = struct.pack(">24s2h",GroupName, num_subs,0)
+		else:
+			TempSec = struct.pack(">34sh",GroupName, num_subs)
+			
 		TempSec += TempSec2
 		grp1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 		grp1sec += TempSec
