@@ -256,8 +256,8 @@ class WriteBflyt(object):
 						unk4 = int(loop.find("unk4").text)
 						TempSec += struct.pack(">4B", BlendOp, Src, Dst, unk4)
 						
-				Indirect = i.findall("Indirect")
-				if i.find("Indirect") != None:
+				Indirect = i.findall("IndirectAdjust")
+				if i.find("IndirectAdjust") != None:
 					for loop in Indirect:
 						Rotate = float(loop.find("Rotate").text)
 						Xwarp = float(loop.find("Xwarp").text)
