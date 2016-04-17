@@ -207,7 +207,7 @@ class ReadBflyt(object):
 			AlphaTest = RT.BitExtract(flags, 1, 22)
 			Blend_mode = RT.BitExtract(flags, 2, 20)
 			BlendAlpha = RT.BitExtract(flags, 2, 18)
-			ShadowBlending = RT.BitExtract(flags, 2, 13)
+			ShadowBlending = RT.BitExtract(flags, 1, 14)
 			
 			# test = 30
 			# while test != 0:
@@ -242,7 +242,7 @@ class ReadBflyt(object):
 				loop += 1
 			
 			loop = 0
-			while loop < MappingSettings: # 16
+			while loop < MappingSettings: # 8
 				unk = RT.uint8(data, pos);pos += 1
 				MappingMethod = RT.uint8(data, pos);pos += 1
 				unk2 = RT.uint8(data, pos);pos += 1
@@ -278,7 +278,7 @@ class ReadBflyt(object):
 				
 				
 			loop = 0
-			while loop < AlphaTest: # 
+			while loop < AlphaTest: # 8
 				Condition = RT.uint8(data, pos);pos += 1
 				unk1 = RT.uint8(data, pos);pos += 1
 				unk2 = RT.uint8(data, pos);pos += 1
@@ -293,7 +293,7 @@ class ReadBflyt(object):
 				loop += 1
 			
 			loop = 0
-			while loop < Blend_mode: # 
+			while loop < Blend_mode: # 4
 				BlendOp = RT.uint8(data, pos);pos += 1
 				Src = RT.uint8(data, pos);pos += 1
 				Dst = RT.uint8(data, pos);pos += 1
@@ -306,7 +306,7 @@ class ReadBflyt(object):
 				loop += 1
 			
 			loop = 0
-			while loop < BlendAlpha: # 
+			while loop < BlendAlpha: # 4
 				BlendOp = RT.uint8(data, pos);pos += 1
 				Src = RT.uint8(data, pos);pos += 1
 				Dst = RT.uint8(data, pos);pos += 1
@@ -320,7 +320,7 @@ class ReadBflyt(object):
 			
 			loop = 0
 			
-			while loop < Indirect: # 24
+			while loop < Indirect: # 12
 				Rotate = RT.float4(data, pos);pos += 4
 				Xwarp = RT.float4(data, pos);pos += 4
 				Ywarp = RT.float4(data, pos);pos += 4
@@ -331,7 +331,7 @@ class ReadBflyt(object):
 				loop += 1
 				
 			loop = 0
-			while loop < ProjectionMapping: # 40
+			while loop < ProjectionMapping: # 20
 				XTrans = RT.float4(data, pos);pos += 4
 				YTrans = RT.float4(data, pos);pos += 4
 				XScale = RT.float4(data, pos);pos += 4
@@ -350,7 +350,7 @@ class ReadBflyt(object):
 				loop += 1				
 			
 			loop = 0
-			while loop < ShadowBlending: # 16
+			while loop < ShadowBlending: # 8
 				ShadBlend = etree.SubElement(entries, "ShadowBlending")
 				BlackBlending = []
 				while len(BlackBlending) < 3:
