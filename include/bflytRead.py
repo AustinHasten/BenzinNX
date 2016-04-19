@@ -60,7 +60,7 @@ class ReadBflyt(object):
 		elif magic == "usd1":
 			self.usd1section(data, pos, UseMatNames)
 		elif len(data) == pos:
-			print "Done"			
+			print "File Converted"			
 		else:
 			print "No code for %s section at %d" %(magic, pos)
 			sys.exit(1)
@@ -194,7 +194,7 @@ class ReadBflyt(object):
 			colorback.attrib['A'] = str(back_color[3])
 			flags = RT.uint32(data, pos);pos += 4
 			#print flags
-			etree.SubElement(entries, "flags").text = str(flags)
+			# etree.SubElement(entries, "flags").text = str(flags)
 						
 			fullpos = StartPos + mat1length # debug skip section
 			

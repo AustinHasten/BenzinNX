@@ -79,7 +79,7 @@ class WriteBflyt(object):
 			else:
 				with open(output, "wb") as dirpath:
 					dirpath.write(self.OutFile)
-			print "Done"
+			print "File Converted"
 		except:
 			print "Destination file is in use"
 		
@@ -161,7 +161,6 @@ class WriteBflyt(object):
 			temp = sec.findall("entries")
 			self.MatList = []
 			MatOffset = [4*len(temp)+12]
-			fullTempSec = ""
 			for i in temp:
 				name = i.get("name")
 				self.MatList.append(name)
@@ -176,13 +175,14 @@ class WriteBflyt(object):
 				backcolG = temp3.get("G")
 				backcolB = temp3.get("B")
 				backcolA = temp3.get("A")
-				flags = i.find("flags").text
-				TempSec = struct.pack(">28s8BI",name,int(forecolR),int(forecolG),int(forecolB),int(forecolA),
-										int(backcolR),int(backcolG),int(backcolB),int(backcolA),int(flags))
+				#flags = i.find("flags").text
+				TempSec = ""
+				flags = 0
 										
 				texref = i.findall("texture")
 				if i.find("texture") != None:
 					for loop in texref:
+						flags += WT.BitInsert(1,1,2,30)
 						try:
 							file = self.texturefiles.index(loop.get("name"))
 						except ValueError:
@@ -197,6 +197,7 @@ class WriteBflyt(object):
 				TextureSRT = i.findall("TextureSRT")
 				if i.find("TextureSRT") != None:
 					for loop in TextureSRT:
+						flags += WT.BitInsert(1,1,2,28)
 						XTrans = float(loop.find("XTrans").text)
 						YTrans = float(loop.find("YTrans").text)
 						Rotate = float(loop.find("Rotate").text)
@@ -207,7 +208,8 @@ class WriteBflyt(object):
 						
 				mapping = i.findall("mapping")
 				if i.find("mapping") != None:
-					for loop in mapping:						
+					for loop in mapping:
+						flags += WT.BitInsert(1,1,2,26)
 						unk = int(loop.find("unk").text)
 						MappingMethod = WT.RepresentsInt(loop.find("MappingMethod").text, types.MappingTypes)
 						unk2 = int(loop.find("unk2").text)
@@ -222,6 +224,7 @@ class WriteBflyt(object):
 				TextureCombiners = i.findall("TextureCombiners")
 				if i.find("TextureCombiners") != None:
 					for loop in TextureCombiners:
+						flags += WT.BitInsert(1,1,2,24)
 						ColorBlend = WT.RepresentsInt(loop.find("ColorBlend").text, types.ColorBlendTypes)
 						AlphaBlending = WT.RepresentsInt(loop.find("AlphaBlending").text, types.BlendTypes)
 						unk3 = int(loop.find("unk3").text)
@@ -231,6 +234,7 @@ class WriteBflyt(object):
 				AlphaTest = i.findall("AlphaTest")
 				if i.find("AlphaTest") != None:
 					for loop in AlphaTest:
+						flags += WT.BitInsert(1,1,1,22)
 						Condition = WT.RepresentsInt(loop.find("Condition").text, types.AlphaTestCondition)
 						unk1 = int(loop.find("unk1").text)
 						unk2 = int(loop.find("unk2").text)
@@ -241,6 +245,7 @@ class WriteBflyt(object):
 				BlendMode = i.findall("BlendMode")
 				if i.find("BlendMode") != None:
 					for loop in BlendMode:
+						flags += WT.BitInsert(1,1,2,20)
 						BlendOp = WT.RepresentsInt(loop.find("BlendOp").text, types.BlendCalcOp)
 						Src = WT.RepresentsInt(loop.find("Src").text, types.BlendCalc)
 						Dst = WT.RepresentsInt(loop.find("Dst").text, types.BlendCalc)
@@ -250,6 +255,7 @@ class WriteBflyt(object):
 				BlendModeAlpha = i.findall("BlendModeAlpha")
 				if i.find("BlendModeAlpha") != None:
 					for loop in BlendModeAlpha:
+						flags += WT.BitInsert(1,1,2,18)
 						BlendOp = WT.RepresentsInt(loop.find("BlendOp").text, types.BlendCalcOp)
 						Src = WT.RepresentsInt(loop.find("Src").text, types.BlendCalc)
 						Dst = WT.RepresentsInt(loop.find("Dst").text, types.BlendCalc)
@@ -259,6 +265,7 @@ class WriteBflyt(object):
 				Indirect = i.findall("IndirectAdjust")
 				if i.find("IndirectAdjust") != None:
 					for loop in Indirect:
+						flags += WT.BitInsert(1,1,1,17)
 						Rotate = float(loop.find("Rotate").text)
 						Xwarp = float(loop.find("Xwarp").text)
 						Ywarp = float(loop.find("Ywarp").text)
@@ -267,6 +274,7 @@ class WriteBflyt(object):
 				ProjectionMapping = i.findall("ProjectionMapping")
 				if i.find("ProjectionMapping") != None:
 					for loop in ProjectionMapping:
+						flags += WT.BitInsert(1,1,2,15)
 						XTrans = float(loop.find("XTrans").text)
 						YTrans = float(loop.find("YTrans").text)
 						XScale = float(loop.find("XScale").text)
@@ -280,6 +288,7 @@ class WriteBflyt(object):
 				ShadowBlending = i.findall("ShadowBlending")
 				if i.find("ShadowBlending") != None:
 					for loop in ShadowBlending:
+						flags += WT.BitInsert(1,1,1,14)
 						temp2 = loop.find("BlackBlending")
 						BlackcolR = temp2.get("R")
 						BlackcolG = temp2.get("G")
@@ -296,10 +305,11 @@ class WriteBflyt(object):
 						
 				# if int(flags) != 0:
 					# TempSec += binascii.unhexlify(i.find("dump").text)
-					
 				if len(MatOffset) < len(temp):
 					MatOffset.append(MatOffset[-1] + len(TempSec))
 					
+				fullTempSec = struct.pack(">28s8BI",name,int(forecolR),int(forecolG),int(forecolB),int(forecolA),
+										int(backcolR),int(backcolG),int(backcolB),int(backcolA),int(flags))
 				fullTempSec += TempSec
 				
 			TempSec2 = struct.pack('>%sI' % len(MatOffset), *MatOffset)

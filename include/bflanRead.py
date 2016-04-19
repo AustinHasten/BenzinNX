@@ -26,7 +26,7 @@ class ReadBflan(object):
 		elif magic == "pai1":
 			self.pai1section(data, pos)
 		elif len(data) == pos:
-			print "Done"			
+			print "File Converted"			
 		else:
 			print "No code for %s section at %s" %(magic, hex(pos))
 			#sys.exit(1)
