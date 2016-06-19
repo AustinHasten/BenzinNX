@@ -3,7 +3,7 @@ from lxml import etree
 from urllib2 import urlopen
 from include import *
 
-version = "1.0.3"
+version = "1.0.4"
 
 def main():
 	print "BenzinU %s by Diddy81" % version
@@ -88,8 +88,7 @@ Usage: BenzinU input [output]
 def checkupdate():
 	contents = version
 	try:
-		ur = urlopen("http://pastebin.com/raw/3EHszD1v")
-		print "im here"
+		ur = urlopen("http://pastebin.com/raw/3EHszD1v")		
 		contents = ur.readline()
 	except:
 		pass

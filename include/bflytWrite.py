@@ -553,7 +553,12 @@ class WriteBflyt(object):
 			ShadowItalic = float(Shadows.find("ItalicTilt").text)
 			unk3 = int(Shadows.find("unk3").text)
 			
-			text = binascii.unhexlify(sec.find("text").text)		
+			Texttemp =sec.find("text").text
+			if Texttemp == None:
+				text = ""
+			else:
+				text = binascii.unhexlify(sec.find("text").text)
+				
 			while len(text) % 4 != 0:
 				text += "\x00"
 			callname = sec.find("callname").text
