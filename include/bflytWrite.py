@@ -161,6 +161,7 @@ class WriteBflyt(object):
 			temp = sec.findall("entries")
 			self.MatList = []
 			MatOffset = [4*len(temp)+12]
+			fullTempSec = ""
 			for i in temp:
 				name = i.get("name")
 				self.MatList.append(name)
@@ -245,7 +246,7 @@ class WriteBflyt(object):
 				BlendMode = i.findall("BlendMode")
 				if i.find("BlendMode") != None:
 					for loop in BlendMode:
-						flags += WT.BitInsert(1,1,2,20)
+						flags += WT.BitInsert(1,1,2,20)						
 						BlendOp = WT.RepresentsInt(loop.find("BlendOp").text, types.BlendCalcOp)
 						Src = WT.RepresentsInt(loop.find("Src").text, types.BlendCalc)
 						Dst = WT.RepresentsInt(loop.find("Dst").text, types.BlendCalc)
@@ -282,8 +283,7 @@ class WriteBflyt(object):
 						Option = WT.RepresentsInt(loop.find("Option").text, types.ProjectionMappingTypes)
 						unk1 = int(loop.find("unk1").text)
 						unk2 = int(loop.find("unk2").text)
-						TempSec += struct.pack(">4f2BH", XTrans, YTrans, XScale, YScale, Option, unk1, unk2)
-						
+						TempSec += struct.pack(">4f2BH", XTrans, YTrans, XScale, YScale, Option, unk1, unk2)						
 						
 				ShadowBlending = i.findall("ShadowBlending")
 				if i.find("ShadowBlending") != None:
@@ -308,7 +308,7 @@ class WriteBflyt(object):
 				if len(MatOffset) < len(temp):
 					MatOffset.append(MatOffset[-1] + len(TempSec))
 					
-				fullTempSec = struct.pack(">28s8BI",name,int(forecolR),int(forecolG),int(forecolB),int(forecolA),
+				fullTempSec += struct.pack(">28s8BI",name,int(forecolR),int(forecolG),int(forecolB),int(forecolA),
 										int(backcolR),int(backcolG),int(backcolB),int(backcolA),int(flags))
 				fullTempSec += TempSec
 				

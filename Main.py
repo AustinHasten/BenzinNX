@@ -3,7 +3,7 @@ from lxml import etree
 from urllib2 import urlopen
 from include import *
 
-version = "1.0.4"
+version = "1.0.5"
 
 def main():
 	print "BenzinU %s by Diddy81" % version
