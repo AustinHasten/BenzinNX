@@ -3,7 +3,7 @@ from lxml import etree
 from urllib2 import urlopen
 from include import *
 
-version = "1.0.5"
+version = "1.0.6"
 
 def main():
 	print "BenzinU %s by Diddy81" % version
@@ -99,7 +99,7 @@ def update():
 	print "A update is available for BenzinU\nWould you like to download the update now?\nSelecting Yes will end this session and open the download link"
 	retCode = raw_input("Would you like to update? [y/n] ")
 	if retCode.lower() == "y" or retCode.lower() == "yes":
-		webbrowser.open('http://dl.dropboxusercontent.com/u/6942312/code/BenzinU/BenzinU.exe', new=0, autoraise=True)
+		webbrowser.open('https://www.dropbox.com/s/bspazlngdmasckl/BenzinU.exe?dl=1', new=0, autoraise=True)
 		sys.exit(1)
 
 if __name__ == "__main__":

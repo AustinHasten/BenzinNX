@@ -198,6 +198,9 @@ class ReadBflyt(object):
 						
 			fullpos = StartPos + mat1length # debug skip section
 			
+			if flags == 2069:
+				flags = 21
+			
 			texref = RT.BitExtract(flags, 2, 30)
 			TextureSRT = RT.BitExtract(flags, 2, 28)
 			MappingSettings = RT.BitExtract(flags, 2, 26)
