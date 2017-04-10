@@ -573,9 +573,10 @@ class ReadBflyt(object):
 			etree.SubElement(tag, "material").text = str(mat_num)
 		else:
 			etree.SubElement(tag, "material").text = self.MaterialNames[mat_num]
-		if font_idx == 65535:
-			font_idx = 0
-		font = etree.SubElement(tag, "font", Name=self.fontnames[font_idx])
+		try:
+			font = etree.SubElement(tag, "font", Name=self.fontnames[font_idx])
+		except:
+			font = etree.SubElement(tag, "font", Name= str(font_idx))
 		originTree = etree.SubElement(font, "alignment")
 		originTree.attrib['x'] = types.originX[alignment%4]
 		originTree.attrib['y'] = types.originY[alignment/4]

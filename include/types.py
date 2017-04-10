@@ -20,7 +20,7 @@ BlendCalcOp = ["0", "Add", "Subtract", "ReverseSubtract", "Min", "Max"]
 
 LogicalCalcOp = ["None", "NoOp", "Clear", "Set", "Copy", "InvCopy", "Inv", "And", "Nand", "Or", "Nor", "Xor", "Equiv", "RevAnd", "InvAnd", "RevOr", "InvOr"]
 
-ProjectionMappingTypes = ["Standard", "EntireLayout", "", "", "PaneRandSProjection"]
+ProjectionMappingTypes = ["Standard", "EntireLayout", "2", "3", "PaneRandSProjection", "5", "6"]
 
 TextAlign = ["NA", "Left", "Center", "Right"]
 

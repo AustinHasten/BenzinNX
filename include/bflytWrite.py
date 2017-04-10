@@ -508,7 +508,10 @@ class WriteBflyt(object):
 			len2 = int(sec.find("length").text)
 			mat_num = self.MatErr(sec.find("material").text)
 			font = sec.find("font")
-			font_idx = self.fontfiles.index(font.get("Name"))
+			try:
+				font_idx = self.fontfiles.index(font.get("Name"))
+			except:
+				font_idx = int(font.get("Name"))
 			temp = font.find("alignment")
 			alignmentL = WT.RepresentsInt(temp.get("x"), types.originX)
 			alignmentH = WT.RepresentsInt(temp.get("y"), types.originY) * 4
