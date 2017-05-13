@@ -606,15 +606,15 @@ class WriteBflyt(object):
 		return grp1sec
 	
 	def writecnt1(self, sec):
-		PartType = sec.find("PartType")
-		Partname = PartType.get("name")
-		NameLength = WT.by4(len(Partname))
-		parts = PartType.findall("parts")
-		animParts = 0
-		
-		AnimPart = sec.find("AnimPart")
 		
 		if sec.find("dump") == None:
+			PartType = sec.find("PartType")
+			Partname = PartType.get("name")
+			NameLength = WT.by4(len(Partname))
+			parts = PartType.findall("parts")
+			animParts = 0
+			
+			AnimPart = sec.find("AnimPart")
 			firstSec = ""
 			secondSec = ""
 			thirdSec = ""
