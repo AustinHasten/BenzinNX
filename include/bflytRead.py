@@ -10,6 +10,7 @@ class ReadBflyt(object):
 
 	def start(self, data, pos, name, output, UseMatNames):
 		# self.setup()
+		sys.setrecursionlimit(2000)
 		self.root = etree.Element("xmflyt")
 		self.checkheader(data, pos, UseMatNames)
 		

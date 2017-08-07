@@ -89,7 +89,7 @@ class WriteBflyt(object):
 			
 	def writelyt1(self, sec):
 		try:
-			drawnFromMiddle = int(sec.find("drawnFromMiddle").text)		
+			drawnFromMiddle = int(sec.find("drawnFromMiddle").text)
 			pad = 0
 			width = float(sec.find("width").text)
 			height = float(sec.find("height").text)
@@ -100,7 +100,7 @@ class WriteBflyt(object):
 			lyt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 			lyt1sec += TempSec
 			return lyt1sec
-		except AttributeError:			
+		except AttributeError:
 			print "%s missing from lyt1 section" %WT.errinfo(traceback.format_exc())
 			sys.exit(1)
 		
@@ -246,7 +246,7 @@ class WriteBflyt(object):
 				BlendMode = i.findall("BlendMode")
 				if i.find("BlendMode") != None:
 					for loop in BlendMode:
-						flags += WT.BitInsert(1,1,2,20)						
+						flags += WT.BitInsert(1,1,2,20)
 						BlendOp = WT.RepresentsInt(loop.find("BlendOp").text, types.BlendCalcOp)
 						Src = WT.RepresentsInt(loop.find("Src").text, types.BlendCalc)
 						Dst = WT.RepresentsInt(loop.find("Dst").text, types.BlendCalc)
@@ -317,14 +317,14 @@ class WriteBflyt(object):
 			mat1sec = struct.pack(">4sI2h",sec.get('type'),int(len(TempSec2))+12,len(temp),0)
 			mat1sec += TempSec2
 			return mat1sec
-		except AttributeError:			
+		except AttributeError:
 			print "%s missing from mat1 section" %WT.errinfo(traceback.format_exc())
 			sys.exit(1)
 				
 	def writepan1(self, sec):
 		TempSec = self.writepaneinfo(sec)
 		pan1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
-		pan1sec += TempSec		
+		pan1sec += TempSec
 		return pan1sec
 				
 	def writepas1(self, sec):
@@ -374,9 +374,9 @@ class WriteBflyt(object):
 			TempSec += struct.pack(">4IH2B", vtxColorTL, vtxColorTR, vtxColorBL, vtxColorBR, mat_num, len(num_texcoords), 0)
 			TempSec += texcoords
 			pic1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
-			pic1sec += TempSec				
+			pic1sec += TempSec
 			return pic1sec
-		except AttributeError:			
+		except AttributeError:
 			print "%s missing from pic1 section" %WT.errinfo(traceback.format_exc())
 			sys.exit(1)
 	
@@ -415,7 +415,7 @@ class WriteBflyt(object):
 					
 			# wnd4  = sec.find("wnd4")
 			# offset = wnd4.findall("offset")
-			wnd4mat = sec.find("wnd4mat")		
+			wnd4mat = sec.find("wnd4mat")
 			wnd4matmat = wnd4mat.findall("material")
 			indexlist = wnd4mat.findall("index")
 			part1 = struct.pack('>8H4B2I16BH2B', stretchLeft, stretchRight, stretchUp, stretchDown, customLeft, customRight, customUp, customDown,
@@ -445,7 +445,7 @@ class WriteBflyt(object):
 			wnd1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 			wnd1sec += TempSec
 			return wnd1sec
-		except AttributeError:			
+		except AttributeError:
 			print "%s missing from wnd1 section" %WT.errinfo(traceback.format_exc())
 			sys.exit(1)
 		
@@ -493,11 +493,13 @@ class WriteBflyt(object):
 					
 			TempSec += entrySec
 			TempSec += TempSec2
+			if sec.find("dump").text != None:
+				TempSec += binascii.unhexlify(sec.find("dump").text)
 			
 			prt1sec = struct.pack(">4sI",sec.get('type'),int(len(TempSec))+8)
 			prt1sec += TempSec
 			return prt1sec
-		except AttributeError:			
+		except AttributeError:
 			print "%s missing from prt1 section" %WT.errinfo(traceback.format_exc())
 			sys.exit(1)
 		
@@ -579,7 +581,7 @@ class WriteBflyt(object):
 			txt1sec += TempSec
 			
 			return txt1sec
-		except AttributeError:			
+		except AttributeError:
 			print "%s missing from txt1 section" %WT.errinfo(traceback.format_exc())
 			sys.exit(1)
 		
@@ -591,8 +593,8 @@ class WriteBflyt(object):
 			num_subs = len(temp.findall('sub'))
 			subnames = temp.findall('sub')
 			for i in subnames:
-				TempSec2 += struct.pack('>24s', i.text)				
-		else:		
+				TempSec2 += struct.pack('>24s', i.text)
+		else:
 			num_subs = 0
 			
 		if self.bflytVersion < 1282:
