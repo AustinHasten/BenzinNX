@@ -166,10 +166,10 @@ class ReadBflan(object):
                     entry.attrib['type1'] = str(type1)
                     entry.attrib['type2'] = typename
                     
-                    if data_type == 512:
+                    if data_type == 2:
                         self.triplet(data, pos, entry, coord_count)
                         
-                    elif data_type == 256:
+                    elif data_type == 1:
                         self.pair(data, pos, entry, coord_count)
 
         
