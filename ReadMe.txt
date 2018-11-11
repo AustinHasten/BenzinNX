@@ -1,3 +1,7 @@
+A fork of BenzinU by Diddy81, meant to process files used by the Nintendo Switch rather than the Nintendo WiiU. Very much a work in progress. BenzinU ReadMe below.
+
+
+
 WIP python based benzin for the new bflyt format in the wii U layout files
 
 Usage: BenzinU input [option] [output]
