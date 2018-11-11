@@ -39,11 +39,11 @@ class ReadBflan(object):
     def bflanHeader(self, data, pos):
         bflanmagic = data[0:4]; pos += 4
         endian = RT.uint16(data, pos);pos += 2
-        if endian == 65534: #0xFFFE - Little Endian
-            pass
-        else:
-            print("Big endian not supported!")
-            sys.exit(1)
+        #if endian == 65534: #0xFFFE - Little Endian
+        #    pass
+        #else:
+        #    print("Big endian not supported!")
+        #    sys.exit(1)
         FirstSectionOffsetree = RT.uint16(data, pos);pos += 2    # Should be 20
         version = RT.uint16(data, pos);pos += 2     # Always 0x0202
         pad1 = RT.uint16(data, pos);pos += 2         # Padding
@@ -141,6 +141,9 @@ class ReadBflan(object):
                 typetree = etree.SubElement(pane, "tag")
                 TagStartPos = pos
                 tagtype = data[pos:pos + 4];pos += 4
+                if tagtype == ',\x00\x00\x00':
+                    tagtype = data[pos:pos + 4];pos += 4
+                print ("tagtype", tagtype, pos-4)
                 typetree.attrib['type'] = tagtype
                 
                 entry_count = RT.uint8(data, pos);pos += 1

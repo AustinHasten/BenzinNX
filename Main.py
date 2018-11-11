@@ -1,3 +1,6 @@
+# BenzinU by Diddy81
+# Modified by Austin Hasten
+
 import os, sys, struct, webbrowser
 from lxml import etree
 from urllib2 import urlopen
@@ -6,9 +9,7 @@ from include import *
 version = "1.0.9"
 
 def main():
-    print "BenzinU %s by Diddy81" % version
-    print "Modified by Austin Hasten"
-
+    print sys.argv[1]
     UseMatNames, output = options()
     name, ext = os.path.splitext(sys.argv[1])
     
