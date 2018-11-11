@@ -1,6 +1,6 @@
 
 wraps = ["NEAR_CLAMP", "NEAR_REPEAT", "NEAR_MIRROR", "GX2_MIRROR_ONCE", "CLAMP",
-        "REPEAT", "MIRROR", "GX2_MIRROR_ONCE_BORDER" ]
+		"REPEAT", "MIRROR", "GX2_MIRROR_ONCE_BORDER" ]
 
 originX = ["Center", "Left", "Right"]
 
