@@ -4,9 +4,7 @@ import binascii
 WT = Writer()
 import types
 
-
 class WriteBflan(object):
-
     def start(self, data, name, output):
         self.FileSections = 0
         self.OutFile = ""
@@ -32,9 +30,7 @@ class WriteBflan(object):
             print "Destination file is in use"
         #self.debugfile(self.OutFile)
         
-        
     def header(self):
-                        
         return struct.pack(">4s4HI2H","FLAN",65279,20,int(self.version.get("Number")),0,int(len(self.OutFile)) + 20,self.FileSections,0)
             
     def writepat1(self, sec):
@@ -143,7 +139,6 @@ class WriteBflan(object):
         TempSec += entrySection
         taginfo += TempSec
         return taginfo
-        
     
     def entrySection(self, entry, tagtype):
         type1 = entry.get("type1")
@@ -194,14 +189,8 @@ class WriteBflan(object):
             p2 = int(i[1].text)
             p3 = int(i[2].text)
             TempSec += struct.pack('>f2H' , p1, p2, p3)
-        
         return TempSec
     
-    
     def debugfile(self, data):
-        
         with open("data.bin", "wb") as dirpath:
             dirpath.write(data)
-            
-            
-            
