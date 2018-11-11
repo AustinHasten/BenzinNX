@@ -39,10 +39,10 @@ class ReadBflan(object):
     def bflanHeader(self, data, pos):
         bflanmagic = data[0:4]; pos += 4
         endian = RT.uint16(data, pos);pos += 2
-        if endian == 65279: #0xFEFF - Big Endian
+        if endian == 65534: #0xFFFE - Little Endian
             pass
         else:
-            print("Little endian not supported!")
+            print("Big endian not supported!")
             sys.exit(1)
         FirstSectionOffsetree = RT.uint16(data, pos);pos += 2    # Should be 20
         version = RT.uint16(data, pos);pos += 2     # Always 0x0202
