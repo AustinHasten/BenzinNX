@@ -81,6 +81,9 @@ class ReadBflan(object):
             GroupName = RT.getstr(data[pos:]);pos += 28
             etree.SubElement(strngs2, "Groupname").text = str(GroupName)
             i += 1
+
+        # Skip 8 bytes of padding introduced in NX files.
+        pos += 8
             
         self.checkheader(data, pos)    
         
