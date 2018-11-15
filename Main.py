@@ -1,28 +1,23 @@
 # BenzinU by Diddy81
 # Modified by Austin Hasten
 
-import os, sys, struct, webbrowser
-from lxml import etree
-from urllib2 import urlopen
+import os, sys
 from include import *
-
-version = "1.0.9"
+from lxml import etree
+from urllib.request import urlopen
 
 def main():
-    print sys.argv[1]
+    print(sys.argv[1])
     UseMatNames, output = options()
     name, ext = os.path.splitext(sys.argv[1])
-    
-    f = open(sys.argv[1], "rb")
-    data = f.read()
-    f.close
-    header = data[0:4]
+  
+    with open(sys.argv[1], 'rb') as f:
+        data = f.read()
+    header = data[0:4].decode('utf-8')
     if header == "FLYT":
-        bflytread = bflytRead.ReadBflyt()
-        bflytread.start(data, 0, name, output, UseMatNames)
+        bflytread = bflytRead.ReadBflyt(data, output)
     elif header == "FLAN":
-        bflanread = bflanRead.ReadBflan()
-        bflanread.start(data, 0, name, output)
+        bflanread = bflanRead.ReadBflan(data, output)
     else:
         try:
             tree = etree.parse(sys.argv[1])
@@ -56,7 +51,7 @@ Usage: BenzinU input [output]
     output:
         output file name is optional """
     if len(sys.argv) < 2:
-        print usage
+        print(usage)
         sys.exit(1)
     if len(sys.argv) >= 3:  
         if sys.argv[2].lower() == "-m":
@@ -66,13 +61,12 @@ Usage: BenzinU input [output]
             except:
                 output = None               
         elif sys.argv[2].startswith("-"):
-            print "Unknown option given"
-            print usage
+            print("Unknown option given")
+            print(usage)
             sys.exit(1)
         else:
             UseMatNames = True
             output = sys.argv[2]
-            
     elif len(sys.argv) == 2:
         try:
             output = sys.argv[2]
@@ -80,7 +74,7 @@ Usage: BenzinU input [output]
             output = None
         UseMatNames = True      
     else:
-        print usage
+        print(usage)
         sys.exit(1)
         
     return UseMatNames, output

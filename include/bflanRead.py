@@ -1,233 +1,149 @@
-import sys, struct
+import re
+import sys
+from . import types
 from lxml import etree
-from ReadTypes import Reader 
-RT = Reader()
-import types
+from collections import namedtuple
+from struct import unpack_from, calcsize
 
 class ReadBflan(object):
+    def __init__(self, data, output):
+        self.root = etree.Element('xmflan')
+        self.position = 0
+        self.data = data
+        self.read_header()
+        etree.ElementTree(self.root).write(output, pretty_print=True)
+        print("File converted.")
 
-    def start(self, data, pos, name, output):
-        self.root = etree.Element("xmflan")
-        self.checkheader(data, pos)
-        RT.indent(self.root)
-        if output == None:
-            with open(name + '.xmlan', "w") as dirpath:
-                dirpath.write(etree.tostring(self.root))
-        else:
-            with open(output, "w") as dirpath:
-                dirpath.write(etree.tostring(self.root))
-    
-    def checkheader(self, data, pos):
-        magic = data[pos:pos + 4]
-        if magic == "FLAN":
-            self.bflanHeader(data, pos)
-        elif magic == "pat1":
-            self.pat1section(data, pos)
-        elif magic == "pai1":
-            self.pai1section(data, pos)
-        elif len(data) == pos:
-            print "File Converted"            
-        else:
-            print "No code for %s section at %s" %(magic, hex(pos))
-            #sys.exit(1)
-        
-    def ReadMagic(self, data, pos):
-        magic = data[pos:pos + 4]; pos += 4
-        seclength = RT.uint32(data, pos);pos += 4
-        return magic,seclength,pos
-        
-    def bflanHeader(self, data, pos):
-        bflanmagic = data[0:4]; pos += 4
-        endian = RT.uint16(data, pos);pos += 2
-        #if endian == 65534: #0xFFFE - Little Endian
-        #    pass
-        #else:
-        #    print("Big endian not supported!")
-        #    sys.exit(1)
-        FirstSectionOffsetree = RT.uint16(data, pos);pos += 2    # Should be 20
-        version = RT.uint16(data, pos);pos += 2     # Always 0x0202
-        pad1 = RT.uint16(data, pos);pos += 2         # Padding
-        filesize = RT.uint32(data, pos);pos += 4    # Full Filesize
-        sections = RT.uint16(data, pos);pos += 2    # Number of sections
-        pad2 = RT.uint16(data, pos);pos += 2         # Padding
-        self.newroot = etree.SubElement(self.root, "version", Number=str(version))
-        self.checkheader(data, pos)    
-        
-    def pat1section(self, data, pos):
-        StartPatPos = pos
-        pat1magic, pat1length, pos = self.ReadMagic(data,pos)            # read magic & section length
-        AnimOrder = RT.uint16(data, pos);pos += 2
-        Num_Seconds = RT.uint16(data, pos);pos += 2
-        FirstOffset = RT.uint32(data, pos);pos += 4
-        SecondsOffset = RT.uint32(data, pos);pos += 4
-        Start = RT.uint16(data, pos);pos += 2
-        End = RT.uint16(data, pos);pos += 2
-        ChildBinding = RT.uint8(data, pos);pos += 1
-        pad = RT.uint8(data, pos);pos += 1
-        pad1 = RT.uint16(data, pos);pos += 2
-        pos = StartPatPos + FirstOffset
-        First = RT.getstr(data[pos:])
-        
-        tag = etree.SubElement(self.newroot, "tag", type="pat1")
-        etree.SubElement(tag, "AnimOrder").text = str(AnimOrder)
-        etree.SubElement(tag, "StartOfFile").text = str(Start)
-        etree.SubElement(tag, "EndOfFile").text = str(End)
-        etree.SubElement(tag, "ChildBinding").text = str(ChildBinding)        
-        etree.SubElement(tag, "First").text = str(First)
-        strngs2 = etree.SubElement(tag, "AnimatedGroups")
-        pos = StartPatPos + SecondsOffset
-        i = 0
-        while i < Num_Seconds:
-            GroupName = RT.getstr(data[pos:]);pos += 28
-            etree.SubElement(strngs2, "Groupname").text = str(GroupName)
-            i += 1
+    def unpackk(self, formstr, increment=True):
+        rval = unpack_from(formstr, self.data, self.position)
+        self.position += calcsize(formstr) if increment else 0
+        return rval if len(rval) > 1 else rval[0]
 
-        # Skip 8 bytes of padding introduced in NX files.
-        pos += 8
-            
-        self.checkheader(data, pos)    
-        
-    def pai1section(self, data, pos):
-        StartPaiPos = pos
-        pai1magic, pai1length, pos = self.ReadMagic(data,pos)            # read magic & section length
-        framesize = RT.uint16(data, pos);pos += 2
-        flags = RT.uint8(data, pos);pos += 1
-        pad = RT.uint8(data, pos);pos += 1
-        num_timgs = RT.uint16(data, pos);pos += 2
-        num_entries = RT.uint16(data, pos);pos += 2
-        entry_offset = RT.uint32(data, pos);pos += 4
-        
-        tag = etree.SubElement(self.newroot, "tag", type="pai1")
-        tag.attrib['framesize'] = str(framesize)
-        tag.attrib['flags'] = str(flags)
-        
-        TimgsOffsets = []
-        i = 0
-        if num_timgs > 0:
-            while i < num_timgs:
-                TimgsOffsets.append(RT.uint32(data, pos));pos += 4
-                i += 1
-            for value in TimgsOffsets:
-                pos = StartPaiPos + 20 + value
-                Timgs = etree.SubElement(tag, "timg")
-                Timgs.attrib['name'] = RT.getstr(data[pos:])
-        
-        pos = StartPaiPos + entry_offset
-        OffsetList = []
-        i = 0
-        while i < num_entries:
-            OffsetList.append(RT.uint32(data, pos));pos += 4
-            i += 1
-            
-        for item in OffsetList:
-            pos = StartPaiPos + item
-            pane = etree.SubElement(tag, "pane")
-            name = RT.getstr(data[pos:]);pos += 28
-            num_tags = RT.uint8(data, pos);pos += 1
-            is_material = RT.uint8(data, pos);pos += 1
-            pad = RT.uint16(data, pos);pos += 2
-            
-            pane.attrib['name'] = name
-            pane.attrib['type'] = str(is_material)
-                        
-            TagOffsets = []
-            i = 0
-            while i < num_tags:
-                TagOffsets.append(RT.uint32(data, pos));pos += 4
-                i += 1
-                
-            for offset in TagOffsets:
-                pos = StartPaiPos + item + offset
-                typetree = etree.SubElement(pane, "tag")
-                TagStartPos = pos
-                tagtype = data[pos:pos + 4];pos += 4
-                if tagtype == ',\x00\x00\x00':
-                    tagtype = data[pos:pos + 4];pos += 4
-                print ("tagtype", tagtype, pos-4)
-                typetree.attrib['type'] = tagtype
-                
-                entry_count = RT.uint8(data, pos);pos += 1
-                pad = RT.uint24(data, pos);pos += 3
-                Offsets = []
-                i = 0
-                while i < entry_count:
-                    Offsets.append(RT.uint32(data, pos));pos += 4
-                    i += 1
-                    
-                for offset1 in Offsets:
-                    pos = TagStartPos + offset1
-                    type1 = RT.uint8(data, pos);pos += 1
-                    type2 = RT.uint8(data, pos);pos += 1
-                    data_type = RT.uint16(data, pos);pos += 2
-                    coord_count = RT.uint16(data, pos);pos += 2
-                    pad1 = RT.uint16(data, pos);pos += 2
-                    OffsetToTagData = RT.uint32(data, pos);pos += 4
-                    
-                    typename = self.GetTypeName(tagtype, type2)
-                    
-                    entry = etree.SubElement(typetree, "entry")
-                    entry.attrib['type1'] = str(type1)
-                    entry.attrib['type2'] = typename
-                    
-                    if data_type == 2:
-                        self.triplet(data, pos, entry, coord_count)
-                        
-                    elif data_type == 1:
-                        self.pair(data, pos, entry, coord_count)
+    def unpackkstr(self, strlen, increment=True):
+        return self.unpackk(str(strlen) + 's', increment).decode('utf-8')
 
-        
-    
-    def GetTypeName(self, tagtype, type2):
+    def unpackkvarstr(self):
+        strlen = self.data[self.position:].find(b'\x00')
+        string = self.unpackkstr(strlen)
+        paddinglen = re.search(b'[^\x00]', self.data[self.position:]).start()
+        self.position += paddinglen
+        return string
+
+    def read_header(self):
+        magic = self.unpackkstr(4)
+        routing = {'FLAN':self.read_bflanheader, 'pat1':self.read_pat1section, 'pai1':self.read_pai1section}
         try:
-            if tagtype == "FLPA":
-                typename = types.FLPAtype2[type2]
-            elif tagtype == "FLVI":
-                typename = types.FLVItype2[type2]
-            elif tagtype == "FLVC":
-                typename = types.FLVCtype2[type2]
-            elif tagtype == "FLMC":
-                typename = types.FLMCtype2[type2]
-            elif tagtype == "FLTS":
-                typename = types.FLTStype2[type2]
-            elif tagtype == "FLTP":
-                typename = types.FLTPtype2[type2]
-            elif tagtype == "FLIM":
-                typename = types.FLIMtype2[type2]
-                
-            return typename
-        except:
-            return str(type2)
+            routing[magic]()
+        except KeyError:
+            print(f"No code for {magic} section at {self.position}.")
         
+    def read_bflanheader(self):
+        bflanheader = types.bflanheader_tup(*self.unpackk('HHHHIHH'))
+        self.newroot = etree.SubElement(self.root, 'version', Number=str(bflanheader.version))
+        self.read_header()
         
+    def read_pat1section(self):
+        pat_start_pos = self.position - 4
+        pat1section = types.pat1section_tup(*self.unpackk('IHHIIHHBBH'))
+
+        self.position = pat_start_pos + pat1section.firstoffset
+        first = self.unpackkvarstr()
         
-    def triplet(self, data, pos, tag, count):
-        i = 0
-        while i < count:
-            p1 = RT.float4(data, pos);pos += 4
-            p2 = RT.float4(data, pos);pos += 4
-            p3 = RT.float4(data, pos);pos += 4
-            info = etree.SubElement(tag, "triplet")
-            etree.SubElement(info, "frame").text = str(p1)
-            etree.SubElement(info, "value").text = str(p2)
-            etree.SubElement(info, "blend").text = str(p3)            
-            i += 1
-            
-    def pair(self, data, pos, tag, count):
-        i = 0
-        while i < count:
-            p1 = RT.float4(data, pos);pos += 4
-            p2 = RT.uint16(data, pos);pos += 2
-            p3 = RT.uint16(data, pos);pos += 2
-            info = etree.SubElement(tag, "pair")
-            etree.SubElement(info, "frame").text = str(p1)
-            etree.SubElement(info, "data2").text = str(p2)
-            etree.SubElement(info, "padding").text = str(p3)            
-            i += 1
+        tag = etree.SubElement(self.newroot, 'tag', type='pat1')
+        etree.SubElement(tag, 'AnimOrder').text = str(pat1section.animorder)
+        etree.SubElement(tag, 'StartOfFile').text = str(pat1section.start)
+        etree.SubElement(tag, 'EndOfFile').text = str(pat1section.end)
+        etree.SubElement(tag, 'ChildBinding').text = str(pat1section.childbinding)
+        etree.SubElement(tag, 'First').text = str(first)
+        strngs2 = etree.SubElement(tag, 'AnimatedGroups')
+        self.position = pat_start_pos + pat1section.secondsoffset
+        for _ in range(pat1section.numseconds):
+            group_name = self.unpackkvarstr()
+            etree.SubElement(strngs2, 'Groupname').text = str(group_name)
+
+        self.read_header()
+
+    def write_pat1_xml(self, pat1):
+        tag = etree.SubElement(self.newroot, 'tag', type='pat1')
+        etree.SubElement(tag, 'AnimOrder').text = str(pat1.animorder)
+        etree.SubElement(tag, 'StartOfFile').text = str(pat1.start)
+        etree.SubElement(tag, 'EndOfFile').text = str(pat1.end)
+        etree.SubElement(tag, 'ChildBinding').text = str(pat1.childbinding)
+        etree.SubElement(tag, 'First').text = str(first)
+        strngs2 = etree.SubElement(tag, 'AnimatedGroups')
+        self.position = pat_start_pos + pat1section.secondsoffset
+        for _ in range(pat1section.numseconds):
+            group_name = self.unpackkvarstr()
+            etree.SubElement(strngs2, 'Groupname').text = str(group_name)
         
-        
-    def debugfile(self, data):
-        
-        with open("data.bin", "w") as dirpath:
-            dirpath.write(data)
-            
-            
+    def read_pai1section(self):
+        pai_start_pos = self.position - 4
+        pai1section = types.pai1section_tup(*self.unpackk('IHBBHHI'))
+
+        tag = etree.SubElement(self.newroot, 'tag', type='pai1')
+        tag.attrib['framesize'] = str(pai1section.framesize)
+        tag.attrib['flags'] = str(pai1section.flags)
+
+        timgs_offsets = [ self.unpackk('I') for _ in range(pai1section.numtimgs) ]
+        for timgs_offset in timgs_offsets:
+            self.position = pai_start_pos + 20 + timgs_offset
+            timgs = etree.SubElement(tag, 'timg')
+            timgs.attrib['name'] = self.unpackkvarstr()
+
+        self.position = pai_start_pos + pai1section.entryoffset
+        pane_offsets = [ self.unpackk('I') for _ in range(pai1section.numentries) ]
+        for pane_offset in pane_offsets:
+            self.position = pai_start_pos + pane_offset
+            pane = etree.SubElement(tag, 'pane')
+            name = self.unpackkvarstr()
+            entry = types.entry_tup(*self.unpackk('BBH'))
+
+            pane.attrib['name'] = name
+            pane.attrib['type'] = str(entry.is_material)
+
+            tag_offsets = [ self.unpackk('I') for _ in range(entry.num_tags) ]
+            for tag_offset in tag_offsets:
+                self.position = pai_start_pos + pane_offset + tag_offset
+                typetree = etree.SubElement(pane, 'tag')
+                tag_start_pos = self.position
+                tag_type = self.unpackkstr(4)
+                # TODO Handle this more elegantly if possible.
+                if tag_type == ',\x00\x00\x00':
+                    tag_type = self.unpackkstr(4)
+                typetree.attrib['type'] = tag_type
+                entry_count = self.unpackk('B')
+                pad = self.unpackk('3B')
+                    
+                tag_data_offsets = [ self.unpackk('I') for _ in range(entry_count) ]
+                for tag_data_offset in tag_data_offsets:
+                    self.position = tag_start_pos + tag_data_offset
+                    tag_data = types.tag_data_tup(*self.unpackk('BBHHHI'))
+                    try:
+                        typename = types.typedict[tag_type][tag_data.type2]
+                    except KeyError:
+                        typename = str(tag_data.type2)
+
+                    entry = etree.SubElement(typetree, 'entry')
+                    entry.attrib['type1'] = str(tag_data.type1)
+                    entry.attrib['type2'] = typename
+
+                    if tag_data.datatype == 2:
+                        self.triplet(tag_data.coordcount, entry)
+                    elif tag_data.datatype == 1:
+                        self.pair(tag_data.coordcount, entry)
+    
+    def triplet(self, count, entry):
+        for _ in range(count):
+            p1, p2, p3 = self.unpackk('3f')
+            info = etree.SubElement(entry, 'triplet')
+            etree.SubElement(info, 'frame').text = str(p1)
+            etree.SubElement(info, 'value').text = str(p2)
+            etree.SubElement(info, 'blend').text = str(p3)
+
+    def pair(self, count, entry):
+        for _ in range(count):
+            p1, p2, p3 = self.unpackk('fHH')
+            info = etree.SubElement(entry, 'pair')
+            etree.SubElement(info, 'frame').text = str(p1)
+            etree.SubElement(info, 'data2').text = str(p2)
+            etree.SubElement(info, 'padding').text = str(p3)
