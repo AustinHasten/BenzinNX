@@ -1,4 +1,3 @@
-
 import struct, sys
 
 class Writer(object):
@@ -25,7 +24,7 @@ class Writer(object):
             try:
                 return list.index(data)
             except:
-                print "%s is a unknown entry"%data
+                print(f"{data} is a unknown entry")
                 sys.exit(1)
             
     def BitInsert(self, value, newValue, count, start):
