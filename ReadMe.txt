@@ -1,6 +1,21 @@
-A fork of BenzinU by Diddy81, meant to process files used by the Nintendo Switch rather than the Nintendo WiiU. Very much a work in progress. BenzinU ReadMe below.
+# BenzinNX
 
+A fork of BenzinU by Diddy81, meant to process files used by the Nintendo Switch rather than the Nintendo WiiU. Very much a work in progress.
 
+Things that do work:
+
+    Converting .bflan files to .xmlan files (100% success rate on my 5.1.0 files)
+    Converting .xmlan files to .bflan files (Unless the file contains an FLEU section)
+
+Things that I plan to do:
+
+    Fix converting .xmlan files to .bflan files when the file contains an FLEU section
+
+Things that I may or may not do:
+
+    Add .bflyt/.xmlyt conversion.
+
+BenzinU ReadMe below.
 
 WIP python based benzin for the new bflyt format in the wii U layout files
 
