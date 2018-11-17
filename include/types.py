@@ -10,7 +10,7 @@ typedict = {
     'FLIM': ["rotate", "Uscale", "Vscale"]
 }
 bflanheader_tup = namedtuple('bflan', ['endian', 'firstsectionoffsetree', 'version', 'pad1', 'filesize', 'sections', 'pad2'])
-pat1section_tup = namedtuple('pat1', ['length', 'animorder', 'numseconds', 'firstoffset', 'secondsoffset', 'start', 'end', 'childbinding', 'pad', 'pad1'])
-pai1section_tup = namedtuple('pai1', ['length', 'framesize', 'flags', 'pad', 'numtimgs', 'numentries', 'entryoffset'])
+pat_tup = namedtuple('pat1', ['length', 'animorder', 'numseconds', 'firstoffset', 'secondsoffset', 'start', 'end', 'childbinding', 'pad', 'pad1'])
+pai_tup = namedtuple('pai1', ['length', 'framesize', 'flags', 'pad', 'numtimgs', 'numentries', 'entryoffset'])
 entry_tup = namedtuple('entry', ['num_tags', 'is_material', 'pad'])
-tag_data_tup = namedtuple('offset', ['type1', 'type2', 'datatype', 'coordcount', 'pad1', 'offsettotagdata'])
+tag_data_tup = namedtuple('tag_data', ['type1', 'type2', 'datatype', 'coordcount', 'pad1', 'offsettotagdata'])

@@ -1,13 +1,12 @@
 import re
 import sys
 from . import types
-from lxml import etree
-from collections import namedtuple
+from lxml import etree, objectify
 from struct import unpack_from, calcsize
 
 class ReadBflan(object):
     def __init__(self, data, output):
-        self.root = etree.Element('xmflan')
+        self.root = objectify.Element('xmflan')
         self.position = 0
         self.data = data
         self.read_header()
@@ -31,7 +30,7 @@ class ReadBflan(object):
 
     def read_header(self):
         magic = self.unpackkstr(4)
-        routing = {'FLAN':self.read_bflanheader, 'pat1':self.read_pat1section, 'pai1':self.read_pai1section}
+        routing = {'FLAN':self.read_bflanheader, 'pat1':self.read_pat, 'pai1':self.read_pai}
         try:
             routing[magic]()
         except KeyError:
@@ -39,62 +38,62 @@ class ReadBflan(object):
         
     def read_bflanheader(self):
         bflanheader = types.bflanheader_tup(*self.unpackk('HHHHIHH'))
-        self.newroot = etree.SubElement(self.root, 'version', Number=str(bflanheader.version))
+        self.newroot = objectify.SubElement(self.root, 'version', Number=str(bflanheader.version))
         self.read_header()
         
-    def read_pat1section(self):
+    def read_pat(self):
         pat_start_pos = self.position - 4
-        pat1section = types.pat1section_tup(*self.unpackk('IHHIIHHBBH'))
+        pat = types.pat_tup(*self.unpackk('IHHIIHHBBH'))
 
-        self.position = pat_start_pos + pat1section.firstoffset
+        self.position = pat_start_pos + pat.firstoffset
         first = self.unpackkvarstr()
         
-        tag = etree.SubElement(self.newroot, 'tag', type='pat1')
-        etree.SubElement(tag, 'AnimOrder').text = str(pat1section.animorder)
-        etree.SubElement(tag, 'StartOfFile').text = str(pat1section.start)
-        etree.SubElement(tag, 'EndOfFile').text = str(pat1section.end)
-        etree.SubElement(tag, 'ChildBinding').text = str(pat1section.childbinding)
-        etree.SubElement(tag, 'First').text = str(first)
-        strngs2 = etree.SubElement(tag, 'AnimatedGroups')
-        self.position = pat_start_pos + pat1section.secondsoffset
-        for _ in range(pat1section.numseconds):
+        tag = objectify.SubElement(self.newroot, 'tag', type='pat1')
+        tag.AnimOrder = pat.animorder
+        tag.StartOfFile = pat.start
+        tag.EndOfFile = pat.end
+        tag.ChildBinding = pat.childbinding
+        tag.First = first
+        strngs2 = objectify.SubElement(tag, 'AnimatedGroups')
+        self.position = pat_start_pos + pat.secondsoffset
+        for _ in range(pat.numseconds):
             group_name = self.unpackkvarstr()
-            etree.SubElement(strngs2, 'Groupname').text = str(group_name)
+            objectify.SubElement(strngs2, 'Groupname')._setText(str(group_name))
 
         self.read_header()
 
     def write_pat1_xml(self, pat1):
-        tag = etree.SubElement(self.newroot, 'tag', type='pat1')
-        etree.SubElement(tag, 'AnimOrder').text = str(pat1.animorder)
-        etree.SubElement(tag, 'StartOfFile').text = str(pat1.start)
-        etree.SubElement(tag, 'EndOfFile').text = str(pat1.end)
-        etree.SubElement(tag, 'ChildBinding').text = str(pat1.childbinding)
-        etree.SubElement(tag, 'First').text = str(first)
-        strngs2 = etree.SubElement(tag, 'AnimatedGroups')
-        self.position = pat_start_pos + pat1section.secondsoffset
-        for _ in range(pat1section.numseconds):
+        tag = objectify.SubElement(self.newroot, 'tag', type='pat1')
+        tag.AnimOrder = pat1.animorder
+        tag.StartOfFile = pat1.start
+        tag.EndOfFile = pat1.end
+        tag.ChildBinding = pat1.childbinding
+        tag.First = first
+        strngs2 = objectify.SubElement(tag, 'AnimatedGroups')
+        self.position = pat_start_pos + pat.secondsoffset
+        for _ in range(pat.numseconds):
             group_name = self.unpackkvarstr()
-            etree.SubElement(strngs2, 'Groupname').text = str(group_name)
+            objectify.SubElement(strngs2, 'Groupname')._setText(str(group_name))
         
-    def read_pai1section(self):
+    def read_pai(self):
         pai_start_pos = self.position - 4
-        pai1section = types.pai1section_tup(*self.unpackk('IHBBHHI'))
+        pai = types.pai_tup(*self.unpackk('IHBBHHI'))
 
-        tag = etree.SubElement(self.newroot, 'tag', type='pai1')
-        tag.attrib['framesize'] = str(pai1section.framesize)
-        tag.attrib['flags'] = str(pai1section.flags)
+        tag = objectify.SubElement(self.newroot, 'tag', type='pai1')
+        tag.attrib['framesize'] = str(pai.framesize)
+        tag.attrib['flags'] = str(pai.flags)
 
-        timgs_offsets = [ self.unpackk('I') for _ in range(pai1section.numtimgs) ]
+        timgs_offsets = [ self.unpackk('I') for _ in range(pai.numtimgs) ]
         for timgs_offset in timgs_offsets:
             self.position = pai_start_pos + 20 + timgs_offset
-            timgs = etree.SubElement(tag, 'timg')
+            timgs = objectify.SubElement(tag, 'timg')
             timgs.attrib['name'] = self.unpackkvarstr()
 
-        self.position = pai_start_pos + pai1section.entryoffset
-        pane_offsets = [ self.unpackk('I') for _ in range(pai1section.numentries) ]
+        self.position = pai_start_pos + pai.entryoffset
+        pane_offsets = [ self.unpackk('I') for _ in range(pai.numentries) ]
         for pane_offset in pane_offsets:
             self.position = pai_start_pos + pane_offset
-            pane = etree.SubElement(tag, 'pane')
+            pane = objectify.SubElement(tag, 'pane')
             name = self.unpackkvarstr()
             entry = types.entry_tup(*self.unpackk('BBH'))
 
@@ -104,7 +103,7 @@ class ReadBflan(object):
             tag_offsets = [ self.unpackk('I') for _ in range(entry.num_tags) ]
             for tag_offset in tag_offsets:
                 self.position = pai_start_pos + pane_offset + tag_offset
-                typetree = etree.SubElement(pane, 'tag')
+                typetree = objectify.SubElement(pane, 'tag')
                 tag_start_pos = self.position
                 tag_type = self.unpackkstr(4)
                 # TODO Handle this more elegantly if possible.
@@ -123,7 +122,7 @@ class ReadBflan(object):
                     except KeyError:
                         typename = str(tag_data.type2)
 
-                    entry = etree.SubElement(typetree, 'entry')
+                    entry = objectify.SubElement(typetree, 'entry')
                     entry.attrib['type1'] = str(tag_data.type1)
                     entry.attrib['type2'] = typename
 
@@ -134,16 +133,10 @@ class ReadBflan(object):
     
     def triplet(self, count, entry):
         for _ in range(count):
-            p1, p2, p3 = self.unpackk('3f')
-            info = etree.SubElement(entry, 'triplet')
-            etree.SubElement(info, 'frame').text = str(p1)
-            etree.SubElement(info, 'value').text = str(p2)
-            etree.SubElement(info, 'blend').text = str(p3)
+            info = objectify.SubElement(entry, 'triplet')
+            info.frame, info.value, info.blend = self.unpackk('3f')
 
     def pair(self, count, entry):
         for _ in range(count):
-            p1, p2, p3 = self.unpackk('fHH')
-            info = etree.SubElement(entry, 'pair')
-            etree.SubElement(info, 'frame').text = str(p1)
-            etree.SubElement(info, 'data2').text = str(p2)
-            etree.SubElement(info, 'padding').text = str(p3)
+            info = objectify.SubElement(entry, 'pair')
+            info.frame, info.data2, info.padding = self.unpackk('fHH')
