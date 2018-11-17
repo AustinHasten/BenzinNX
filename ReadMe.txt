@@ -7,6 +7,10 @@ Things that do work:
     Converting .bflan files to .xmlan files (100% success rate on my 5.1.0 files)
     Converting .xmlan files to .bflan files (Unless the file contains an FLEU section)
 
+Not tested:
+
+    Packing converted .bflan files into .szs files and using with LayeredFS.
+
 Things that I plan to do:
 
     Fix converting .xmlan files to .bflan files when the file contains an FLEU section
