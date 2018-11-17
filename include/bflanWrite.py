@@ -21,7 +21,6 @@ class WriteBflan(object):
                 sys.exit(1)
 
     def start(self, data, name, output):
-        print(type(data))
         self.file_sections = 0
         self.output_file = b''
         self.version = data.find('version')
@@ -146,7 +145,8 @@ class WriteBflan(object):
         try:
             type2 = self.represents_int(entry.get('type2'), types.typedict[tagtype])
         except:
-            print('entry section error', type2)
+            print('entry section error', tagtype)
+            sys.exit(1)
         
         if len(entry.findall('triplet')) != 0:
             data_type = 2
