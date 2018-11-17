@@ -54,25 +54,12 @@ class ReadBflan(object):
         tag.EndOfFile = pat.end
         tag.ChildBinding = pat.childbinding
         tag.First = first
+
         strngs2 = objectify.SubElement(tag, 'AnimatedGroups')
         self.position = pat_start_pos + pat.secondsoffset
-        for _ in range(pat.numseconds):
-            objectify.SubElement(strngs2, 'Groupname')._setText(self.unpackkvarstr())
+        strngs2.Groupname = [ self.unpackkvarstr() for _ in range(pat.numseconds) ]
 
         self.read_header()
-
-    def write_pat1_xml(self, pat1):
-        tag = objectify.SubElement(self.newroot, 'tag', type='pat1')
-        tag.AnimOrder = pat1.animorder
-        tag.StartOfFile = pat1.start
-        tag.EndOfFile = pat1.end
-        tag.ChildBinding = pat1.childbinding
-        tag.First = first
-        strngs2 = objectify.SubElement(tag, 'AnimatedGroups')
-        self.position = pat_start_pos + pat.secondsoffset
-        for _ in range(pat.numseconds):
-            group_name = self.unpackkvarstr()
-            objectify.SubElement(strngs2, 'Groupname')._setText(group_name)
         
     def read_pai(self):
         pai_start_pos = self.position - 4
