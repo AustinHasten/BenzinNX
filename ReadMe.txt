@@ -1,3 +1,5 @@
+# This is dead. If you're interested in customizing the home menu, I'd suggest reaching out to Team Qcean.
+
 # BenzinNX
 
 A fork of BenzinU by Diddy81, meant to process files used by the Nintendo Switch rather than the Nintendo WiiU. Very much a work in progress.
